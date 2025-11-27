@@ -430,10 +430,7 @@
 
     <script type="text/babel">
         const { useState, useEffect } = React;
-
-        // ⚠️ IMPORTANT: Replace this with your actual GitHub raw URL!
-        // Example: https://raw.githubusercontent.com/Gugag/Bodbe_Tutorial_Site/refs/heads/main/videos.json
-        const VIDEOS_JSON_URL = './videos.json';  // Default to same folder, change to GitHub URL
+        const VIDEOS_JSON_URL = 'https://raw.githubusercontent.com/Gugag/Bodbe_Tutorial_Site/refs/heads/main./videos.json';  // Default to same folder, change to GitHub URL
 
         const DEPARTMENTS = [
             { id: 'fo', name: 'Front Office', icon: 'hotel' },
@@ -590,7 +587,7 @@
                             <div className="empty-state">
                                 <i className="lucide-video-off"></i>
                                 <p>No tutorials available for this department yet</p>
-                                <p style={{fontSize: '0.9rem', marginTop: '1rem', color: var(--soft-gray)}}>
+                                <p style={{fontSize: '0.9rem', marginTop: '1rem', color: 'var(--soft-gray)'}}>
                                     Managers: Add videos to the <code>videos.json</code> file
                                 </p>
                             </div>
