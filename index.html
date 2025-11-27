@@ -10,22 +10,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lucide-static/0.263.1/font/lucide.min.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         :root {
-            --cream: #FAF8F3;
-            --gold: #C8A882;
-            --dark-gold: #9A7E5C;
-            --charcoal: #2C2C2C;
-            --soft-gray: #6B6B6B;
-            --accent: #8B7355;
+            --cream: #FAF8F3; --gold: #C8A882; --dark-gold: #9A7E5C;
+            --charcoal: #2C2C2C; --soft-gray: #6B6B6B; --accent: #8B7355;
             --light-border: #E8E4DC;
         }
-
+        
         body {
             font-family: 'Montserrat', sans-serif;
             background: var(--cream);
@@ -33,26 +25,23 @@
             line-height: 1.6;
             min-height: 100vh;
         }
-
+        
         .header {
             background: linear-gradient(135deg, var(--charcoal) 0%, #3A3A3A 100%);
             color: var(--cream);
             padding: 3rem 2rem;
             text-align: center;
             position: relative;
-            overflow: hidden;
         }
-
+        
         .header::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
+            top: 0; left: 0; right: 0;
             height: 4px;
             background: linear-gradient(90deg, var(--gold), var(--accent), var(--gold));
         }
-
+        
         .header h1 {
             font-family: 'Cormorant Garamond', serif;
             font-size: 3.5rem;
@@ -60,7 +49,7 @@
             letter-spacing: 2px;
             margin-bottom: 0.5rem;
         }
-
+        
         .header .subtitle {
             font-size: 0.95rem;
             letter-spacing: 3px;
@@ -68,328 +57,237 @@
             color: var(--gold);
             font-weight: 300;
         }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 3rem 2rem;
-        }
-
-        .department-tabs {
+        
+        .container { max-width: 1400px; margin: 0 auto; padding: 3rem 2rem; }
+        
+        .sync-banner {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border-left: 4px solid #f39c12;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border-radius: 8px;
             display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
             gap: 1rem;
-            margin-bottom: 3rem;
+        }
+        
+        .sync-banner h3 { color: var(--charcoal); margin-bottom: 0.5rem; }
+        .sync-banner p { color: var(--soft-gray); font-size: 0.9rem; }
+        
+        .sync-button {
+            background: #f39c12;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            white-space: nowrap;
+            font-size: 1rem;
+        }
+        
+        .sync-button:hover { background: #e67e22; }
+        
+        .department-tabs {
+            display: flex; gap: 1rem; margin-bottom: 3rem;
             border-bottom: 2px solid var(--light-border);
             flex-wrap: wrap;
         }
-
+        
         .tab {
-            background: none;
-            border: none;
+            background: none; border: none;
             padding: 1rem 2rem;
             font-family: 'Montserrat', sans-serif;
-            font-size: 1rem;
-            font-weight: 500;
+            font-size: 1rem; font-weight: 500;
             color: var(--soft-gray);
-            cursor: pointer;
-            position: relative;
+            cursor: pointer; position: relative;
             transition: all 0.3s ease;
-            letter-spacing: 1px;
         }
-
-        .tab:hover {
-            color: var(--charcoal);
-        }
-
-        .tab.active {
-            color: var(--charcoal);
-        }
-
+        
+        .tab:hover { color: var(--charcoal); }
+        .tab.active { color: var(--charcoal); }
         .tab.active::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: var(--gold);
+            content: ''; position: absolute;
+            bottom: -2px; left: 0; right: 0;
+            height: 2px; background: var(--gold);
         }
-
+        
         .videos-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
             gap: 2rem;
         }
-
+        
         .video-card {
-            background: white;
-            border-radius: 12px;
+            background: white; border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 4px 16px rgba(0,0,0,0.08);
             transition: all 0.3s ease;
             border: 1px solid var(--light-border);
         }
-
+        
         .video-card:hover {
             transform: translateY(-4px);
             box-shadow: 0 12px 32px rgba(0,0,0,0.12);
         }
-
+        
         .video-thumbnail {
-            width: 100%;
-            height: 200px;
+            width: 100%; height: 200px;
             background: linear-gradient(135deg, var(--gold) 0%, var(--accent) 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: flex; align-items: center; justify-content: center;
         }
-
-        .video-thumbnail i {
-            font-size: 3rem;
-            color: white;
-            opacity: 0.9;
-        }
-
-        .video-content {
-            padding: 1.5rem;
-        }
-
+        
+        .video-thumbnail i { font-size: 3rem; color: white; opacity: 0.9; }
+        .video-content { padding: 1.5rem; }
+        
         .video-title {
             font-family: 'Cormorant Garamond', serif;
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--charcoal);
-            margin-bottom: 0.75rem;
+            font-size: 1.5rem; font-weight: 600;
+            color: var(--charcoal); margin-bottom: 0.75rem;
         }
-
+        
         .video-description {
-            color: var(--soft-gray);
-            font-size: 0.9rem;
-            line-height: 1.6;
-            margin-bottom: 1.5rem;
+            color: var(--soft-gray); font-size: 0.9rem;
+            line-height: 1.6; margin-bottom: 1.5rem;
         }
-
+        
         .btn {
             padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 6px;
+            border: none; border-radius: 6px;
             font-family: 'Montserrat', sans-serif;
-            font-weight: 500;
-            cursor: pointer;
+            font-weight: 500; cursor: pointer;
             transition: all 0.3s ease;
             font-size: 0.9rem;
-            letter-spacing: 0.5px;
-            width: 100%;
         }
-
+        
         .btn-primary {
-            background: var(--charcoal);
-            color: white;
+            background: var(--charcoal); color: white; width: 100%;
         }
-
-        .btn-primary:hover {
-            background: var(--accent);
-        }
-
-        .btn-secondary {
-            background: var(--soft-gray);
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background: var(--charcoal);
-        }
-
-        .btn-danger {
-            background: #dc3545;
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #c82333;
-        }
-
+        .btn-primary:hover { background: var(--accent); }
+        
+        .btn-secondary { background: var(--soft-gray); color: white; }
+        .btn-secondary:hover { background: var(--charcoal); }
+        
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-danger:hover { background: #c82333; }
+        
         .admin-toggle {
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            background: var(--gold);
-            color: white;
-            border: none;
-            padding: 1rem 1.5rem;
-            border-radius: 50px;
-            cursor: pointer;
+            position: fixed; bottom: 2rem; right: 2rem;
+            background: var(--gold); color: white;
+            border: none; padding: 1rem 1.5rem;
+            border-radius: 50px; cursor: pointer;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             transition: all 0.3s ease;
             font-family: 'Montserrat', sans-serif;
-            font-weight: 500;
-            z-index: 100;
+            font-weight: 500; z-index: 100;
         }
-
+        
         .admin-toggle:hover {
             background: var(--dark-gold);
             transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
         }
-
+        
         .admin-panel {
-            background: white;
-            border-radius: 12px;
+            background: white; border-radius: 12px;
             padding: 2rem;
             box-shadow: 0 4px 16px rgba(0,0,0,0.08);
             margin-bottom: 3rem;
         }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
+        
+        .form-group { margin-bottom: 1.5rem; }
         .form-label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: var(--charcoal);
+            display: block; margin-bottom: 0.5rem;
+            font-weight: 500; color: var(--charcoal);
         }
-
+        
         .form-input, .form-textarea, .form-select {
-            width: 100%;
-            padding: 0.75rem;
+            width: 100%; padding: 0.75rem;
             border: 1px solid var(--light-border);
             border-radius: 6px;
             font-family: 'Montserrat', sans-serif;
             font-size: 0.95rem;
-            transition: border-color 0.3s ease;
         }
-
+        
         .form-input:focus, .form-textarea:focus, .form-select:focus {
-            outline: none;
-            border-color: var(--gold);
+            outline: none; border-color: var(--gold);
         }
-
-        .form-textarea {
-            resize: vertical;
-            min-height: 100px;
-        }
-
+        
+        .form-textarea { resize: vertical; min-height: 100px; }
+        
         .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0, 0, 0, 0.6);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 1000; backdrop-filter: blur(4px);
         }
-
+        
         .modal-content {
-            background: white;
-            border-radius: 12px;
-            padding: 2rem;
-            max-width: 1200px;
-            width: 95%;
-            max-height: 90vh;
+            background: white; border-radius: 12px; padding: 2rem;
+            max-width: 1200px; width: 95%; max-height: 90vh;
             overflow-y: auto;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
-
+        
         .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 1.5rem;
         }
-
+        
         .modal-title {
             font-family: 'Cormorant Garamond', serif;
-            font-size: 2rem;
-            font-weight: 600;
+            font-size: 2rem; font-weight: 600;
             color: var(--charcoal);
         }
-
+        
         .close-btn {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: var(--soft-gray);
-            padding: 0.5rem;
-            transition: color 0.3s ease;
+            background: none; border: none;
+            font-size: 1.5rem; cursor: pointer;
+            color: var(--soft-gray); padding: 0.5rem;
         }
-
-        .close-btn:hover {
-            color: var(--charcoal);
-        }
-
+        
+        .close-btn:hover { color: var(--charcoal); }
         .video-frame {
-            width: 100%;
-            aspect-ratio: 16/9;
-            border: none;
-            border-radius: 8px;
+            width: 100%; aspect-ratio: 16/9;
+            border: none; border-radius: 8px;
         }
-
+        
         .empty-state {
-            text-align: center;
-            padding: 4rem 2rem;
+            text-align: center; padding: 4rem 2rem;
             color: var(--soft-gray);
         }
-
+        
         .empty-state i {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-            opacity: 0.3;
+            font-size: 4rem; margin-bottom: 1rem; opacity: 0.3;
         }
-
+        
         .login-form {
-            max-width: 400px;
-            margin: 0 auto;
-            background: white;
-            padding: 2rem;
+            max-width: 400px; margin: 0 auto;
+            background: white; padding: 2rem;
             border-radius: 12px;
             box-shadow: 0 4px 16px rgba(0,0,0,0.08);
         }
-
+        
         .error-message {
-            background: #FFF5F5;
-            border: 1px solid #FED7D7;
-            color: #C53030;
-            padding: 1rem;
-            border-radius: 6px;
-            margin-bottom: 1rem;
+            background: #FFF5F5; border: 1px solid #FED7D7;
+            color: #C53030; padding: 1rem;
+            border-radius: 6px; margin-bottom: 1rem;
         }
-
+        
         @media (max-width: 768px) {
-            .header h1 {
-                font-size: 2.5rem;
-            }
-
-            .videos-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .modal-content {
-                width: 98%;
-                padding: 1.5rem;
-            }
-
-            .modal-title {
-                font-size: 1.5rem;
-            }
+            .header h1 { font-size: 2.5rem; }
+            .videos-grid { grid-template-columns: 1fr; }
+            .modal-content { width: 98%; padding: 1.5rem; }
+            .modal-title { font-size: 1.5rem; }
         }
     </style>
 </head>
 <body>
     <div id="root"></div>
-
     <script type="text/babel">
         const { useState, useEffect } = React;
-
-        const VIDEOS_JSON_URL = 'https://raw.githubusercontent.com/Gugag/Bodbe_Tutorial_Site/main/videos.json';
         const ADMIN_PASSWORD = 'hotel2024';
-
         const DEPARTMENTS = [
             { id: 'fo', name: 'Front Office' },
             { id: 'fb', name: 'F&B' },
@@ -400,7 +298,6 @@
         function App() {
             const [activeDepartment, setActiveDepartment] = useState('fo');
             const [videos, setVideos] = useState({ fo: [], fb: [], hk: [], spa: [] });
-            const [loading, setLoading] = useState(true);
             const [isAdmin, setIsAdmin] = useState(false);
             const [isAuthenticated, setIsAuthenticated] = useState(false);
             const [password, setPassword] = useState('');
@@ -409,56 +306,42 @@
             const [currentVideo, setCurrentVideo] = useState(null);
             const [editingVideo, setEditingVideo] = useState(null);
             const [formData, setFormData] = useState({
-                title: '',
-                description: '',
-                videoUrl: '',
-                department: 'fo'
+                title: '', description: '', videoUrl: '', department: 'fo'
             });
 
             useEffect(() => {
-                loadVideos();
+                const saved = localStorage.getItem('hotelVideos');
+                if (saved) setVideos(JSON.parse(saved));
             }, []);
 
-            const loadVideos = async () => {
-                try {
-                    setLoading(true);
-                    const timestamp = new Date().getTime();
-                    const response = await fetch(`${VIDEOS_JSON_URL}?t=${timestamp}`);
-                    
-                    if (!response.ok) {
-                        throw new Error('Failed to load videos');
-                    }
-                    
-                    const data = await response.json();
-                    setVideos(data);
-                    setLoading(false);
-                } catch (err) {
-                    console.error('Error loading videos:', err);
-                    setLoading(false);
-                }
+            const saveToLocalStorage = (data) => {
+                localStorage.setItem('hotelVideos', JSON.stringify(data));
+                setVideos(data);
+            };
+
+            const downloadJSON = () => {
+                const dataStr = JSON.stringify(videos, null, 2);
+                const blob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `videos-${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+                URL.revokeObjectURL(url);
+                alert('✅ JSON downloaded!\n\nNext:\n1. Go to GitHub\n2. Edit videos.json\n3. Paste this content\n4. Commit\n5. Everyone sees videos!');
             };
 
             const convertVideoUrl = (url) => {
-                // Vimeo
                 if (url.includes('vimeo.com')) {
                     const match = url.match(/vimeo\.com\/(\d+)/);
-                    if (match && match[1]) {
-                        return `https://player.vimeo.com/video/${match[1]}`;
-                    }
+                    if (match && match[1]) return `https://player.vimeo.com/video/${match[1]}`;
                 }
-                // YouTube
                 if (url.includes('youtube.com') || url.includes('youtu.be')) {
                     let videoId = '';
-                    if (url.includes('youtu.be/')) {
-                        videoId = url.split('youtu.be/')[1].split('?')[0];
-                    } else if (url.includes('watch?v=')) {
-                        videoId = url.split('watch?v=')[1].split('&')[0];
-                    } else if (url.includes('embed/')) {
-                        return url;
-                    }
-                    if (videoId) {
-                        return `https://www.youtube.com/embed/${videoId}`;
-                    }
+                    if (url.includes('youtu.be/')) videoId = url.split('youtu.be/')[1].split('?')[0];
+                    else if (url.includes('watch?v=')) videoId = url.split('watch?v=')[1].split('&')[0];
+                    else if (url.includes('embed/')) return url;
+                    if (videoId) return `https://www.youtube.com/embed/${videoId}`;
                 }
                 return url;
             };
@@ -481,32 +364,25 @@
 
             const handleSubmit = (e) => {
                 e.preventDefault();
-                
                 const newVideo = {
                     id: editingVideo?.id || Date.now().toString(),
                     ...formData,
                     videoUrl: convertVideoUrl(formData.videoUrl),
                     createdAt: editingVideo?.createdAt || new Date().toISOString()
                 };
-
                 const dept = newVideo.department;
                 const deptVideos = videos[dept] || [];
-
                 let updatedDeptVideos;
                 if (editingVideo) {
                     updatedDeptVideos = deptVideos.map(v => v.id === editingVideo.id ? newVideo : v);
                 } else {
                     updatedDeptVideos = [...deptVideos, newVideo];
                 }
-
                 const newVideos = { ...videos, [dept]: updatedDeptVideos };
-                setVideos(newVideos);
-
-                // Show instructions to update GitHub
-                alert('✅ Video saved locally!\n\n📝 To make it visible to everyone:\n1. Copy the JSON below\n2. Go to GitHub → videos.json\n3. Replace file content\n4. Commit changes\n\n' + JSON.stringify(newVideos, null, 2));
-
+                saveToLocalStorage(newVideos);
                 setFormData({ title: '', description: '', videoUrl: '', department: 'fo' });
                 setEditingVideo(null);
+                alert('✅ Video saved!\n\n⚠️ Click "Download & Sync" to share!');
             };
 
             const handleEdit = (video) => {
@@ -520,12 +396,11 @@
             };
 
             const handleDelete = (videoId, department) => {
-                if (window.confirm('Delete this video?')) {
+                if (window.confirm('Delete?')) {
                     const deptVideos = videos[department] || [];
                     const updatedDeptVideos = deptVideos.filter(v => v.id !== videoId);
                     const newVideos = { ...videos, [department]: updatedDeptVideos };
-                    setVideos(newVideos);
-                    alert('✅ Video deleted!\n\nUpdate GitHub with:\n' + JSON.stringify(newVideos, null, 2));
+                    saveToLocalStorage(newVideos);
                 }
             };
 
@@ -543,20 +418,14 @@
                             <h1>Training Tutorials</h1>
                             <div className="subtitle">Bodbe Hotel Excellence</div>
                         </div>
-
                         <div className="container">
                             <div className="department-tabs">
                                 {DEPARTMENTS.map(dept => (
-                                    <button
-                                        key={dept.id}
-                                        className={`tab ${activeDepartment === dept.id ? 'active' : ''}`}
-                                        onClick={() => setActiveDepartment(dept.id)}
-                                    >
+                                    <button key={dept.id} className={`tab ${activeDepartment === dept.id ? 'active' : ''}`} onClick={() => setActiveDepartment(dept.id)}>
                                         {dept.name}
                                     </button>
                                 ))}
                             </div>
-
                             <div className="videos-grid">
                                 {currentDeptVideos.map(video => (
                                     <div key={video.id} className="video-card">
@@ -566,14 +435,11 @@
                                         <div className="video-content">
                                             <h3 className="video-title">{video.title}</h3>
                                             <p className="video-description">{video.description}</p>
-                                            <button className="btn btn-primary" onClick={() => openVideo(video)}>
-                                                Watch Tutorial
-                                            </button>
+                                            <button className="btn btn-primary" onClick={() => openVideo(video)}>Watch Tutorial</button>
                                         </div>
                                     </div>
                                 ))}
                             </div>
-
                             {currentDeptVideos.length === 0 && (
                                 <div className="empty-state">
                                     <i className="lucide-video-off"></i>
@@ -581,11 +447,7 @@
                                 </div>
                             )}
                         </div>
-
-                        <button className="admin-toggle" onClick={() => setIsAdmin(true)}>
-                            Manager Login
-                        </button>
-
+                        <button className="admin-toggle" onClick={() => setIsAdmin(true)}>Manager Login</button>
                         {showVideoModal && currentVideo && (
                             <div className="modal-overlay" onClick={() => setShowVideoModal(false)}>
                                 <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -593,15 +455,8 @@
                                         <h2 className="modal-title">{currentVideo.title}</h2>
                                         <button className="close-btn" onClick={() => setShowVideoModal(false)}>×</button>
                                     </div>
-                                    <iframe
-                                        className="video-frame"
-                                        src={currentVideo.videoUrl}
-                                        allowFullScreen
-                                        title={currentVideo.title}
-                                    />
-                                    <p style={{marginTop: '1rem', color: 'var(--soft-gray)'}}>
-                                        {currentVideo.description}
-                                    </p>
+                                    <iframe className="video-frame" src={currentVideo.videoUrl} allowFullScreen title={currentVideo.title} />
+                                    <p style={{marginTop: '1rem', color: 'var(--soft-gray)'}}>{currentVideo.description}</p>
                                 </div>
                             </div>
                         )}
@@ -621,24 +476,10 @@
                                 {error && <div className="error-message">{error}</div>}
                                 <div className="form-group">
                                     <label className="form-label">Password</label>
-                                    <input
-                                        type="password"
-                                        className="form-input"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        placeholder="Enter admin password"
-                                        required
-                                    />
+                                    <input type="password" className="form-input" value={password} onChange={(e) => setPassword(e.target.value)} required />
                                 </div>
-                                <button type="submit" className="btn btn-primary">Login</button>
-                                <button 
-                                    type="button" 
-                                    className="btn btn-secondary" 
-                                    onClick={() => setIsAdmin(false)}
-                                    style={{marginTop: '0.5rem'}}
-                                >
-                                    Back
-                                </button>
+                                <button type="submit" className="btn btn-primary" style={{marginBottom: '0.5rem'}}>Login</button>
+                                <button type="button" className="btn btn-secondary" onClick={() => setIsAdmin(false)}>Back</button>
                             </form>
                         </div>
                     </div>
@@ -651,93 +492,64 @@
                         <h1>Admin Panel</h1>
                         <div className="subtitle">Manage Training Content</div>
                     </div>
-
                     <div className="container">
+                        <div className="sync-banner">
+                            <div>
+                                <h3>⚠️ Important: Sync Required</h3>
+                                <p>After adding videos, click this button to download JSON, then upload to GitHub</p>
+                            </div>
+                            <button className="sync-button" onClick={downloadJSON}>
+                                📥 Download & Sync
+                            </button>
+                        </div>
                         <div className="admin-panel">
-                            <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '2rem'}}>
-                                <h2>{editingVideo ? 'Edit Video' : 'Add New Video'}</h2>
+                            <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem'}}>
+                                <h2 style={{margin: 0}}>{editingVideo ? 'Edit Video' : 'Add New Video'}</h2>
                                 <button onClick={handleLogout} className="btn btn-secondary">Logout</button>
                             </div>
-
                             <form onSubmit={handleSubmit}>
                                 <div className="form-group">
                                     <label className="form-label">Department</label>
-                                    <select
-                                        className="form-select"
-                                        value={formData.department}
-                                        onChange={(e) => setFormData({...formData, department: e.target.value})}
-                                        required
-                                    >
+                                    <select className="form-select" value={formData.department} onChange={(e) => setFormData({...formData, department: e.target.value})} required>
                                         {DEPARTMENTS.map(dept => (
                                             <option key={dept.id} value={dept.id}>{dept.name}</option>
                                         ))}
                                     </select>
                                 </div>
-
                                 <div className="form-group">
                                     <label className="form-label">Video Title</label>
-                                    <input
-                                        type="text"
-                                        className="form-input"
-                                        value={formData.title}
-                                        onChange={(e) => setFormData({...formData, title: e.target.value})}
-                                        required
-                                    />
+                                    <input type="text" className="form-input" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} placeholder="e.g., Check-in Procedures" required />
                                 </div>
-
                                 <div className="form-group">
                                     <label className="form-label">Description</label>
-                                    <textarea
-                                        className="form-textarea"
-                                        value={formData.description}
-                                        onChange={(e) => setFormData({...formData, description: e.target.value})}
-                                        required
-                                    />
+                                    <textarea className="form-textarea" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} placeholder="Brief description..." required />
                                 </div>
-
                                 <div className="form-group">
                                     <label className="form-label">Video URL (Vimeo or YouTube)</label>
-                                    <input
-                                        type="url"
-                                        className="form-input"
-                                        value={formData.videoUrl}
-                                        onChange={(e) => setFormData({...formData, videoUrl: e.target.value})}
-                                        placeholder="https://vimeo.com/1141051233"
-                                        required
-                                    />
+                                    <input type="url" className="form-input" value={formData.videoUrl} onChange={(e) => setFormData({...formData, videoUrl: e.target.value})} placeholder="https://vimeo.com/123456 or youtube.com/watch?v=..." required />
+                                    <small style={{color: 'var(--soft-gray)', fontSize: '0.85rem', marginTop: '0.5rem', display: 'block'}}>
+                                        ⚠️ Vimeo: Make sure privacy allows embedding!
+                                    </small>
                                 </div>
-
-                                <button type="submit" className="btn btn-primary">
-                                    {editingVideo ? 'Update' : 'Add'} Video
-                                </button>
-                                {editingVideo && (
-                                    <button 
-                                        type="button" 
-                                        onClick={() => {
-                                            setEditingVideo(null);
-                                            setFormData({ title: '', description: '', videoUrl: '', department: 'fo' });
-                                        }}
-                                        className="btn btn-secondary"
-                                        style={{marginLeft: '0.5rem'}}
-                                    >
-                                        Cancel
+                                <div style={{display: 'flex', gap: '0.5rem'}}>
+                                    <button type="submit" className="btn btn-primary" style={{flex: 1}}>
+                                        {editingVideo ? 'Update' : 'Add'} Video
                                     </button>
-                                )}
+                                    {editingVideo && (
+                                        <button type="button" onClick={() => { setEditingVideo(null); setFormData({ title: '', description: '', videoUrl: '', department: 'fo' }); }} className="btn btn-secondary">
+                                            Cancel
+                                        </button>
+                                    )}
+                                </div>
                             </form>
                         </div>
-
                         <div className="department-tabs">
                             {DEPARTMENTS.map(dept => (
-                                <button
-                                    key={dept.id}
-                                    className={`tab ${activeDepartment === dept.id ? 'active' : ''}`}
-                                    onClick={() => setActiveDepartment(dept.id)}
-                                >
+                                <button key={dept.id} className={`tab ${activeDepartment === dept.id ? 'active' : ''}`} onClick={() => setActiveDepartment(dept.id)}>
                                     {dept.name}
                                 </button>
                             ))}
                         </div>
-
                         <div className="videos-grid">
                             {currentDeptVideos.map(video => (
                                 <div key={video.id} className="video-card">
@@ -747,22 +559,15 @@
                                     <div className="video-content">
                                         <h3 className="video-title">{video.title}</h3>
                                         <p className="video-description">{video.description}</p>
-                                        <button className="btn btn-primary" onClick={() => openVideo(video)} style={{marginBottom: '0.5rem'}}>
-                                            Watch
-                                        </button>
+                                        <button className="btn btn-primary" onClick={() => openVideo(video)} style={{marginBottom: '0.5rem'}}>Watch</button>
                                         <div style={{display: 'flex', gap: '0.5rem'}}>
-                                            <button className="btn btn-secondary" onClick={() => handleEdit(video)} style={{flex: 1}}>
-                                                Edit
-                                            </button>
-                                            <button className="btn btn-danger" onClick={() => handleDelete(video.id, video.department)} style={{flex: 1}}>
-                                                Delete
-                                            </button>
+                                            <button className="btn btn-secondary" onClick={() => handleEdit(video)} style={{flex: 1}}>Edit</button>
+                                            <button className="btn btn-danger" onClick={() => handleDelete(video.id, video.department)} style={{flex: 1}}>Delete</button>
                                         </div>
                                     </div>
                                 </div>
                             ))}
                         </div>
-
                         {currentDeptVideos.length === 0 && (
                             <div className="empty-state">
                                 <i className="lucide-video-off"></i>
@@ -770,7 +575,6 @@
                             </div>
                         )}
                     </div>
-
                     {showVideoModal && currentVideo && (
                         <div className="modal-overlay" onClick={() => setShowVideoModal(false)}>
                             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -778,15 +582,8 @@
                                     <h2 className="modal-title">{currentVideo.title}</h2>
                                     <button className="close-btn" onClick={() => setShowVideoModal(false)}>×</button>
                                 </div>
-                                <iframe
-                                    className="video-frame"
-                                    src={currentVideo.videoUrl}
-                                    allowFullScreen
-                                    title={currentVideo.title}
-                                />
-                                <p style={{marginTop: '1rem', color: 'var(--soft-gray)'}}>
-                                    {currentVideo.description}
-                                </p>
+                                <iframe className="video-frame" src={currentVideo.videoUrl} allowFullScreen title={currentVideo.title} />
+                                <p style={{marginTop: '1rem', color: 'var(--soft-gray)'}}>{currentVideo.description}</p>
                             </div>
                         </div>
                     )}
