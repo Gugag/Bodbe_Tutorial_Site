@@ -59,7 +59,6 @@
             font-weight: 300;
             letter-spacing: 2px;
             margin-bottom: 0.5rem;
-            animation: fadeInDown 0.8s ease-out;
         }
 
         .header .subtitle {
@@ -68,63 +67,12 @@
             text-transform: uppercase;
             color: var(--gold);
             font-weight: 300;
-            animation: fadeInUp 0.8s ease-out 0.2s both;
-        }
-
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
         }
 
         .container {
             max-width: 1400px;
             margin: 0 auto;
             padding: 3rem 2rem;
-        }
-
-        .info-banner {
-            background: linear-gradient(135deg, #e8f4f8 0%, #d4ebf7 100%);
-            border-left: 4px solid var(--gold);
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            border-radius: 8px;
-        }
-
-        .info-banner h3 {
-            color: var(--charcoal);
-            margin-bottom: 0.5rem;
-            font-size: 1.1rem;
-        }
-
-        .info-banner p {
-            color: var(--soft-gray);
-            font-size: 0.9rem;
-            line-height: 1.6;
-        }
-
-        .info-banner code {
-            background: white;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            font-size: 0.85rem;
-            color: #d63384;
         }
 
         .department-tabs {
@@ -171,16 +119,6 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
             gap: 2rem;
-            animation: fadeIn 0.6s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
         }
 
         .video-card {
@@ -204,7 +142,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            position: relative;
         }
 
         .video-thumbnail i {
@@ -252,6 +189,86 @@
 
         .btn-primary:hover {
             background: var(--accent);
+        }
+
+        .btn-secondary {
+            background: var(--soft-gray);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: var(--charcoal);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .admin-toggle {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--gold);
+            color: white;
+            border: none;
+            padding: 1rem 1.5rem;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 500;
+            z-index: 100;
+        }
+
+        .admin-toggle:hover {
+            background: var(--dark-gold);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+        }
+
+        .admin-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            margin-bottom: 3rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--charcoal);
+        }
+
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--light-border);
+            border-radius: 6px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.95rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--gold);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
         }
 
         .modal-overlay {
@@ -326,73 +343,22 @@
             opacity: 0.3;
         }
 
-        .empty-state p {
-            font-size: 1.1rem;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 4rem 2rem;
-            color: var(--soft-gray);
-        }
-
-        .loading i {
-            font-size: 3rem;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .error {
-            text-align: center;
+        .login-form {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
             padding: 2rem;
-            color: #C53030;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        }
+
+        .error-message {
             background: #FFF5F5;
-            border-radius: 8px;
-            margin: 2rem 0;
             border: 1px solid #FED7D7;
-        }
-
-        .error h3 {
-            margin-bottom: 1rem;
-        }
-
-        .error button {
-            margin-top: 1rem;
-            max-width: 200px;
-        }
-
-        .refresh-btn {
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            background: var(--gold);
-            color: white;
-            border: none;
+            color: #C53030;
             padding: 1rem;
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            transition: all 0.3s ease;
-            z-index: 100;
-            width: 56px;
-            height: 56px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .refresh-btn:hover {
-            background: var(--dark-gold);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
-        }
-
-        .refresh-btn i {
-            font-size: 1.5rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
         }
 
         @media (max-width: 768px) {
@@ -404,11 +370,6 @@
                 grid-template-columns: 1fr;
             }
 
-            .department-tabs {
-                overflow-x: auto;
-                flex-wrap: nowrap;
-            }
-
             .modal-content {
                 width: 98%;
                 padding: 1.5rem;
@@ -416,11 +377,6 @@
 
             .modal-title {
                 font-size: 1.5rem;
-            }
-
-            .refresh-btn {
-                bottom: 1rem;
-                right: 1rem;
             }
         }
     </style>
@@ -430,22 +386,34 @@
 
     <script type="text/babel">
         const { useState, useEffect } = React;
-        const VIDEOS_JSON_URL = 'https://raw.githubusercontent.com/Gugag/Bodbe_Tutorial_Site/main/videos.json';  // Default to same folder, change to GitHub URL
+
+        const VIDEOS_JSON_URL = 'https://raw.githubusercontent.com/Gugag/Bodbe_Tutorial_Site/main/videos.json';
+        const ADMIN_PASSWORD = 'hotel2024';
 
         const DEPARTMENTS = [
-            { id: 'fo', name: 'Front Office', icon: 'hotel' },
-            { id: 'fb', name: 'F&B', icon: 'utensils' },
-            { id: 'hk', name: 'Housekeeping', icon: 'sparkles' },
-            { id: 'spa', name: 'SPA', icon: 'flower-2' }
+            { id: 'fo', name: 'Front Office' },
+            { id: 'fb', name: 'F&B' },
+            { id: 'hk', name: 'Housekeeping' },
+            { id: 'spa', name: 'SPA' }
         ];
 
         function App() {
             const [activeDepartment, setActiveDepartment] = useState('fo');
-            const [videos, setVideos] = useState({});
+            const [videos, setVideos] = useState({ fo: [], fb: [], hk: [], spa: [] });
             const [loading, setLoading] = useState(true);
-            const [error, setError] = useState(null);
+            const [isAdmin, setIsAdmin] = useState(false);
+            const [isAuthenticated, setIsAuthenticated] = useState(false);
+            const [password, setPassword] = useState('');
+            const [error, setError] = useState('');
             const [showVideoModal, setShowVideoModal] = useState(false);
             const [currentVideo, setCurrentVideo] = useState(null);
+            const [editingVideo, setEditingVideo] = useState(null);
+            const [formData, setFormData] = useState({
+                title: '',
+                description: '',
+                videoUrl: '',
+                department: 'fo'
+            });
 
             useEffect(() => {
                 loadVideos();
@@ -454,27 +422,110 @@
             const loadVideos = async () => {
                 try {
                     setLoading(true);
-                    setError(null);
-                    
-                    // Add timestamp to prevent caching
                     const timestamp = new Date().getTime();
-                    const url = VIDEOS_JSON_URL.includes('?') 
-                        ? `${VIDEOS_JSON_URL}&t=${timestamp}`
-                        : `${VIDEOS_JSON_URL}?t=${timestamp}`;
-                    
-                    const response = await fetch(url);
+                    const response = await fetch(`${VIDEOS_JSON_URL}?t=${timestamp}`);
                     
                     if (!response.ok) {
-                        throw new Error(`Failed to load videos (${response.status}). Please check the videos.json file.`);
+                        throw new Error('Failed to load videos');
                     }
                     
                     const data = await response.json();
                     setVideos(data);
                     setLoading(false);
                 } catch (err) {
-                    setError(err.message);
-                    setLoading(false);
                     console.error('Error loading videos:', err);
+                    setLoading(false);
+                }
+            };
+
+            const convertVideoUrl = (url) => {
+                // Vimeo
+                if (url.includes('vimeo.com')) {
+                    const match = url.match(/vimeo\.com\/(\d+)/);
+                    if (match && match[1]) {
+                        return `https://player.vimeo.com/video/${match[1]}`;
+                    }
+                }
+                // YouTube
+                if (url.includes('youtube.com') || url.includes('youtu.be')) {
+                    let videoId = '';
+                    if (url.includes('youtu.be/')) {
+                        videoId = url.split('youtu.be/')[1].split('?')[0];
+                    } else if (url.includes('watch?v=')) {
+                        videoId = url.split('watch?v=')[1].split('&')[0];
+                    } else if (url.includes('embed/')) {
+                        return url;
+                    }
+                    if (videoId) {
+                        return `https://www.youtube.com/embed/${videoId}`;
+                    }
+                }
+                return url;
+            };
+
+            const handleLogin = (e) => {
+                e.preventDefault();
+                if (password === ADMIN_PASSWORD) {
+                    setIsAuthenticated(true);
+                    setError('');
+                } else {
+                    setError('Invalid password');
+                }
+            };
+
+            const handleLogout = () => {
+                setIsAuthenticated(false);
+                setIsAdmin(false);
+                setPassword('');
+            };
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                
+                const newVideo = {
+                    id: editingVideo?.id || Date.now().toString(),
+                    ...formData,
+                    videoUrl: convertVideoUrl(formData.videoUrl),
+                    createdAt: editingVideo?.createdAt || new Date().toISOString()
+                };
+
+                const dept = newVideo.department;
+                const deptVideos = videos[dept] || [];
+
+                let updatedDeptVideos;
+                if (editingVideo) {
+                    updatedDeptVideos = deptVideos.map(v => v.id === editingVideo.id ? newVideo : v);
+                } else {
+                    updatedDeptVideos = [...deptVideos, newVideo];
+                }
+
+                const newVideos = { ...videos, [dept]: updatedDeptVideos };
+                setVideos(newVideos);
+
+                // Show instructions to update GitHub
+                alert('✅ Video saved locally!\n\n📝 To make it visible to everyone:\n1. Copy the JSON below\n2. Go to GitHub → videos.json\n3. Replace file content\n4. Commit changes\n\n' + JSON.stringify(newVideos, null, 2));
+
+                setFormData({ title: '', description: '', videoUrl: '', department: 'fo' });
+                setEditingVideo(null);
+            };
+
+            const handleEdit = (video) => {
+                setEditingVideo(video);
+                setFormData({
+                    title: video.title,
+                    description: video.description,
+                    videoUrl: video.videoUrl,
+                    department: video.department
+                });
+            };
+
+            const handleDelete = (videoId, department) => {
+                if (window.confirm('Delete this video?')) {
+                    const deptVideos = videos[department] || [];
+                    const updatedDeptVideos = deptVideos.filter(v => v.id !== videoId);
+                    const newVideos = { ...videos, [department]: updatedDeptVideos };
+                    setVideos(newVideos);
+                    alert('✅ Video deleted!\n\nUpdate GitHub with:\n' + JSON.stringify(newVideos, null, 2));
                 }
             };
 
@@ -485,47 +536,110 @@
 
             const currentDeptVideos = videos[activeDepartment] || [];
 
-            if (loading) {
+            if (!isAdmin) {
                 return (
                     <div>
                         <div className="header">
                             <h1>Training Tutorials</h1>
                             <div className="subtitle">Bodbe Hotel Excellence</div>
                         </div>
+
                         <div className="container">
-                            <div className="loading">
-                                <i className="lucide-loader-2"></i>
-                                <p style={{marginTop: '1rem'}}>Loading videos...</p>
+                            <div className="department-tabs">
+                                {DEPARTMENTS.map(dept => (
+                                    <button
+                                        key={dept.id}
+                                        className={`tab ${activeDepartment === dept.id ? 'active' : ''}`}
+                                        onClick={() => setActiveDepartment(dept.id)}
+                                    >
+                                        {dept.name}
+                                    </button>
+                                ))}
                             </div>
+
+                            <div className="videos-grid">
+                                {currentDeptVideos.map(video => (
+                                    <div key={video.id} className="video-card">
+                                        <div className="video-thumbnail">
+                                            <i className="lucide-play-circle"></i>
+                                        </div>
+                                        <div className="video-content">
+                                            <h3 className="video-title">{video.title}</h3>
+                                            <p className="video-description">{video.description}</p>
+                                            <button className="btn btn-primary" onClick={() => openVideo(video)}>
+                                                Watch Tutorial
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {currentDeptVideos.length === 0 && (
+                                <div className="empty-state">
+                                    <i className="lucide-video-off"></i>
+                                    <p>No tutorials available yet</p>
+                                </div>
+                            )}
                         </div>
+
+                        <button className="admin-toggle" onClick={() => setIsAdmin(true)}>
+                            Manager Login
+                        </button>
+
+                        {showVideoModal && currentVideo && (
+                            <div className="modal-overlay" onClick={() => setShowVideoModal(false)}>
+                                <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                                    <div className="modal-header">
+                                        <h2 className="modal-title">{currentVideo.title}</h2>
+                                        <button className="close-btn" onClick={() => setShowVideoModal(false)}>×</button>
+                                    </div>
+                                    <iframe
+                                        className="video-frame"
+                                        src={currentVideo.videoUrl}
+                                        allowFullScreen
+                                        title={currentVideo.title}
+                                    />
+                                    <p style={{marginTop: '1rem', color: 'var(--soft-gray)'}}>
+                                        {currentVideo.description}
+                                    </p>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 );
             }
 
-            if (error) {
+            if (isAdmin && !isAuthenticated) {
                 return (
                     <div>
                         <div className="header">
-                            <h1>Training Tutorials</h1>
-                            <div className="subtitle">Bodbe Hotel Excellence</div>
+                            <h1>Manager Login</h1>
+                            <div className="subtitle">Admin Access</div>
                         </div>
                         <div className="container">
-                            <div className="error">
-                                <h3>⚠️ Cannot Load Videos</h3>
-                                <p>{error}</p>
-                                <p style={{marginTop: '1rem', fontSize: '0.9rem'}}>
-                                    Please check:
-                                    <br />1. The <code>videos.json</code> file exists in the same folder as index.html
-                                    <br />2. Or update VIDEOS_JSON_URL to your GitHub raw URL
-                                    <br />3. The JSON file format is valid
-                                </p>
+                            <form className="login-form" onSubmit={handleLogin}>
+                                {error && <div className="error-message">{error}</div>}
+                                <div className="form-group">
+                                    <label className="form-label">Password</label>
+                                    <input
+                                        type="password"
+                                        className="form-input"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        placeholder="Enter admin password"
+                                        required
+                                    />
+                                </div>
+                                <button type="submit" className="btn btn-primary">Login</button>
                                 <button 
-                                    className="btn btn-primary" 
-                                    onClick={loadVideos}
+                                    type="button" 
+                                    className="btn btn-secondary" 
+                                    onClick={() => setIsAdmin(false)}
+                                    style={{marginTop: '0.5rem'}}
                                 >
-                                    Try Again
+                                    Back
                                 </button>
-                            </div>
+                            </form>
                         </div>
                     </div>
                 );
@@ -534,17 +648,82 @@
             return (
                 <div>
                     <div className="header">
-                        <h1>Training Tutorials</h1>
-                        <div className="subtitle">Bodbe Hotel Excellence</div>
+                        <h1>Admin Panel</h1>
+                        <div className="subtitle">Manage Training Content</div>
                     </div>
 
                     <div className="container">
-                        <div className="info-banner">
-                            <h3>📚 How to Add/Edit Videos</h3>
-                            <p>
-                                Managers: Edit the <code>videos.json</code> file on GitHub, then click the refresh button below.
-                                <br />All employees will see updates automatically within 1-2 minutes!
-                            </p>
+                        <div className="admin-panel">
+                            <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '2rem'}}>
+                                <h2>{editingVideo ? 'Edit Video' : 'Add New Video'}</h2>
+                                <button onClick={handleLogout} className="btn btn-secondary">Logout</button>
+                            </div>
+
+                            <form onSubmit={handleSubmit}>
+                                <div className="form-group">
+                                    <label className="form-label">Department</label>
+                                    <select
+                                        className="form-select"
+                                        value={formData.department}
+                                        onChange={(e) => setFormData({...formData, department: e.target.value})}
+                                        required
+                                    >
+                                        {DEPARTMENTS.map(dept => (
+                                            <option key={dept.id} value={dept.id}>{dept.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label">Video Title</label>
+                                    <input
+                                        type="text"
+                                        className="form-input"
+                                        value={formData.title}
+                                        onChange={(e) => setFormData({...formData, title: e.target.value})}
+                                        required
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label">Description</label>
+                                    <textarea
+                                        className="form-textarea"
+                                        value={formData.description}
+                                        onChange={(e) => setFormData({...formData, description: e.target.value})}
+                                        required
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label">Video URL (Vimeo or YouTube)</label>
+                                    <input
+                                        type="url"
+                                        className="form-input"
+                                        value={formData.videoUrl}
+                                        onChange={(e) => setFormData({...formData, videoUrl: e.target.value})}
+                                        placeholder="https://vimeo.com/1141051233"
+                                        required
+                                    />
+                                </div>
+
+                                <button type="submit" className="btn btn-primary">
+                                    {editingVideo ? 'Update' : 'Add'} Video
+                                </button>
+                                {editingVideo && (
+                                    <button 
+                                        type="button" 
+                                        onClick={() => {
+                                            setEditingVideo(null);
+                                            setFormData({ title: '', description: '', videoUrl: '', department: 'fo' });
+                                        }}
+                                        className="btn btn-secondary"
+                                        style={{marginLeft: '0.5rem'}}
+                                    >
+                                        Cancel
+                                    </button>
+                                )}
+                            </form>
                         </div>
 
                         <div className="department-tabs">
@@ -560,24 +739,25 @@
                         </div>
 
                         <div className="videos-grid">
-                            {currentDeptVideos.map((video, index) => (
-                                <div 
-                                    key={video.id} 
-                                    className="video-card"
-                                    style={{animationDelay: `${index * 0.1}s`}}
-                                >
+                            {currentDeptVideos.map(video => (
+                                <div key={video.id} className="video-card">
                                     <div className="video-thumbnail">
                                         <i className="lucide-play-circle"></i>
                                     </div>
                                     <div className="video-content">
                                         <h3 className="video-title">{video.title}</h3>
                                         <p className="video-description">{video.description}</p>
-                                        <button 
-                                            className="btn btn-primary"
-                                            onClick={() => openVideo(video)}
-                                        >
-                                            Watch Tutorial
+                                        <button className="btn btn-primary" onClick={() => openVideo(video)} style={{marginBottom: '0.5rem'}}>
+                                            Watch
                                         </button>
+                                        <div style={{display: 'flex', gap: '0.5rem'}}>
+                                            <button className="btn btn-secondary" onClick={() => handleEdit(video)} style={{flex: 1}}>
+                                                Edit
+                                            </button>
+                                            <button className="btn btn-danger" onClick={() => handleDelete(video.id, video.department)} style={{flex: 1}}>
+                                                Delete
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
@@ -586,17 +766,10 @@
                         {currentDeptVideos.length === 0 && (
                             <div className="empty-state">
                                 <i className="lucide-video-off"></i>
-                                <p>No tutorials available for this department yet</p>
-                                <p style={{fontSize: '0.9rem', marginTop: '1rem', color: 'var(--soft-gray)'}}>
-                                    Managers: Add videos to the <code>videos.json</code> file
-                                </p>
+                                <p>No videos in this department</p>
                             </div>
                         )}
                     </div>
-
-                    <button className="refresh-btn" onClick={loadVideos} title="Refresh videos">
-                        <i className="lucide-refresh-cw"></i>
-                    </button>
 
                     {showVideoModal && currentVideo && (
                         <div className="modal-overlay" onClick={() => setShowVideoModal(false)}>
