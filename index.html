@@ -384,7 +384,8 @@
             background: white;
             border-radius: 12px;
             padding: 2rem;
-            max-width: 90%;
+            max-width: 1200px;
+            width: 95%;
             max-height: 90vh;
             overflow-y: auto;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
@@ -460,6 +461,15 @@
                 right: 1rem;
                 padding: 0.875rem 1.25rem;
             }
+
+            .modal-content {
+                width: 98%;
+                padding: 1.5rem;
+            }
+
+            .modal-title {
+                font-size: 1.5rem;
+            }
         }
     </style>
 </head>
@@ -526,12 +536,50 @@
             };
 
             const convertOneDriveUrl = (url) => {
+                // Handle YouTube links
+                if (url.includes('youtube.com') || url.includes('youtu.be')) {
+                    let videoId = '';
+                    
+                    // Extract video ID from different YouTube URL formats
+                    if (url.includes('youtu.be/')) {
+                        // Short URL format: https://youtu.be/VIDEO_ID
+                        videoId = url.split('youtu.be/')[1].split('?')[0].split('&')[0];
+                    } else if (url.includes('watch?v=')) {
+                        // Watch URL format: https://www.youtube.com/watch?v=VIDEO_ID
+                        videoId = url.split('watch?v=')[1].split('&')[0];
+                    } else if (url.includes('embed/')) {
+                        // Already embed format
+                        return url;
+                    } else if (url.includes('/v/')) {
+                        // Old embed format
+                        videoId = url.split('/v/')[1].split('?')[0];
+                    }
+                    
+                    if (videoId) {
+                        return `https://www.youtube.com/embed/${videoId}`;
+                    }
+                }
+                
+                // Handle Vimeo links
+                if (url.includes('vimeo.com')) {
+                    const match = url.match(/vimeo\.com\/(\d+)/);
+                    if (match && match[1]) {
+                        return `https://player.vimeo.com/video/${match[1]}`;
+                    }
+                }
+                
+                // Handle Google Drive links
+                if (url.includes('drive.google.com')) {
+                    const match = url.match(/\/d\/([^\/]+)/);
+                    if (match && match[1]) {
+                        return `https://drive.google.com/file/d/${match[1]}/preview`;
+                    }
+                }
+                
                 // Handle SharePoint/OneDrive for Business links
                 if (url.includes('sharepoint.com')) {
                     // SharePoint links need to be converted to embed format
-                    // Extract the base URL and add embed parameter
                     if (!url.includes('embed=1')) {
-                        // Add embed parameter
                         const separator = url.includes('?') ? '&' : '?';
                         return url + separator + 'embed=1&action=embedview';
                     }
@@ -543,12 +591,19 @@
                     if (url.includes('embed')) {
                         return url;
                     }
-                    // Try to extract the file ID and create embed URL
                     const embedUrl = url.replace('view.aspx', 'embed').replace('?', '?embed=1&');
                     return embedUrl;
                 }
                 
-                // For other URLs (YouTube, Vimeo, etc.), return as is
+                // Handle Microsoft Stream
+                if (url.includes('stream.microsoft') || url.includes('microsoftstream.com')) {
+                    if (!url.includes('embed')) {
+                        return url.replace('/video/', '/embed/video/');
+                    }
+                    return url;
+                }
+                
+                // For other URLs, return as is
                 return url;
             };
 
@@ -849,7 +904,7 @@
                         className="admin-toggle"
                         onClick={() => setIsAdmin(true)}
                     >
-                        Manager Login
+                        Login
                     </button>
 
                     {showVideoModal && currentVideo && (
