@@ -47,14 +47,21 @@
   <script type="text/babel">
     const { useState, useEffect, useRef } = React;
 
-    // ⚠️ CHANGE THIS PASSWORD! ⚠️
-    const ADMIN_PASSWORD = 'hotel2024';
+    // ⚠️ PASSWORDS FOR EACH DEPARTMENT MANAGER ⚠️
+    // Change these passwords for each department!
+    const DEPARTMENT_PASSWORDS = {
+      admin: 'admin2024',      // Super Admin - can see all departments
+      fo: 'frontoffice2024',   // Front Office Manager
+      fb: 'foodbev2024',       // Food & Beverage Manager
+      hk: 'housekeeping2024',  // Housekeeping Manager
+      spa: 'spawellness2024',  // SPA Manager
+    };
 
     const departments = [
-      { id: 'fo', name: 'Front Office', icon: '🏨', color: 'from-blue-500 to-blue-600' },
-      { id: 'fb', name: 'Food & Beverage', icon: '🍽️', color: 'from-amber-500 to-amber-600' },
-      { id: 'hk', name: 'Housekeeping', icon: '🛏️', color: 'from-emerald-500 to-emerald-600' },
-      { id: 'spa', name: 'SPA & Wellness', icon: '💆', color: 'from-purple-500 to-purple-600' },
+      { id: 'fo', name: 'Front Office', icon: '🏨', color: 'from-blue-500 to-blue-600', bgColor: 'bg-blue-500' },
+      { id: 'fb', name: 'Food & Beverage', icon: '🍽️', color: 'from-amber-500 to-amber-600', bgColor: 'bg-amber-500' },
+      { id: 'hk', name: 'Housekeeping', icon: '🛏️', color: 'from-emerald-500 to-emerald-600', bgColor: 'bg-emerald-500' },
+      { id: 'spa', name: 'SPA & Wellness', icon: '💆', color: 'from-purple-500 to-purple-600', bgColor: 'bg-purple-500' },
     ];
 
     const getEmbedUrl = (url) => {
@@ -91,21 +98,30 @@
     };
 
     function HotelTrainingPortal() {
+      // Navigation state
+      const [currentPage, setCurrentPage] = useState('home'); // 'home' or 'logs'
+      
       const [videos, setVideos] = useState([]);
       const [watchLogs, setWatchLogs] = useState([]);
       const [loading, setLoading] = useState(true);
       const [saving, setSaving] = useState(false);
-      const [isAdmin, setIsAdmin] = useState(false);
+      
+      // Admin state
+      const [adminRole, setAdminRole] = useState(null); // null, 'admin', 'fo', 'fb', 'hk', 'spa'
       const [showLogin, setShowLogin] = useState(false);
-      const [showLogs, setShowLogs] = useState(false);
+      const [loginType, setLoginType] = useState('admin'); // 'admin' or department id
       const [password, setPassword] = useState('');
       const [loginError, setLoginError] = useState('');
+      
       const [selectedDepartment, setSelectedDepartment] = useState(null);
       const [showAddForm, setShowAddForm] = useState(false);
       const [editingVideo, setEditingVideo] = useState(null);
       const [formData, setFormData] = useState({ title: '', description: '', videoUrl: '', department: 'fo' });
       const [activeVideo, setActiveVideo] = useState(null);
       const [error, setError] = useState(null);
+      
+      // Logs page state
+      const [selectedLogDepartment, setSelectedLogDepartment] = useState(null);
       
       // Auth state
       const [user, setUser] = useState(null);
@@ -146,27 +162,26 @@
         return () => unsubscribe();
       }, []);
 
-      // Load watch logs for admin
+      // Load watch logs
       useEffect(() => {
-        if (!isAdmin) return;
+        if (!adminRole) return;
         
-        const unsubscribe = db.collection('watchLogs')
-          .orderBy('startTime', 'desc')
-          .limit(100)
-          .onSnapshot(
-            (snapshot) => {
-              const logsData = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-              }));
-              setWatchLogs(logsData);
-            },
-            (err) => {
-              console.error("Error loading watch logs:", err);
-            }
-          );
+        let query = db.collection('watchLogs').orderBy('startTime', 'desc').limit(500);
+        
+        const unsubscribe = query.onSnapshot(
+          (snapshot) => {
+            const logsData = snapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            }));
+            setWatchLogs(logsData);
+          },
+          (err) => {
+            console.error("Error loading watch logs:", err);
+          }
+        );
         return () => unsubscribe();
-      }, [isAdmin]);
+      }, [adminRole]);
 
       // Google Sign In
       const signInWithGoogle = async () => {
@@ -187,7 +202,7 @@
         }
       };
 
-      // Start watching video - create log entry
+      // Start watching video
       const startWatching = async (video) => {
         setActiveVideo(video);
         watchStartTime.current = Date.now();
@@ -213,16 +228,16 @@
         }
       };
 
-      // Stop watching video - update log with duration
+      // Stop watching video
       const stopWatching = async () => {
         if (watchStartTime.current && currentWatchLogId.current) {
-          const duration = (Date.now() - watchStartTime.current) / 1000; // in seconds
+          const duration = (Date.now() - watchStartTime.current) / 1000;
           
           try {
             await db.collection('watchLogs').doc(currentWatchLogId.current).update({
               duration: duration,
               endTime: firebase.firestore.FieldValue.serverTimestamp(),
-              completed: duration > 30 // Consider completed if watched more than 30 seconds
+              completed: duration > 30
             });
           } catch (error) {
             console.error("Error updating watch log:", error);
@@ -236,20 +251,26 @@
 
       const handleLogin = (e) => {
         e.preventDefault();
-        if (password === ADMIN_PASSWORD) {
-          setIsAdmin(true);
+        const correctPassword = DEPARTMENT_PASSWORDS[loginType];
+        
+        if (password === correctPassword) {
+          setAdminRole(loginType);
           setShowLogin(false);
           setPassword('');
           setLoginError('');
+          if (loginType !== 'admin') {
+            setSelectedLogDepartment(loginType);
+          }
         } else {
           setLoginError('Incorrect password');
         }
       };
 
       const handleLogout = () => {
-        setIsAdmin(false);
+        setAdminRole(null);
         setSelectedDepartment(null);
-        setShowLogs(false);
+        setCurrentPage('home');
+        setSelectedLogDepartment(null);
       };
 
       const handleAddVideo = async (e) => {
@@ -316,12 +337,61 @@
 
       const getDepartmentInfo = (id) => departments.find((d) => d.id === id);
 
-      // Calculate stats for logs
-      const getLogStats = () => {
-        const uniqueUsers = [...new Set(watchLogs.map(log => log.userEmail))].length;
-        const totalWatchTime = watchLogs.reduce((sum, log) => sum + (log.duration || 0), 0);
-        const completedViews = watchLogs.filter(log => log.completed).length;
-        return { uniqueUsers, totalWatchTime, completedViews, totalViews: watchLogs.length };
+      // Get logs for a specific department
+      const getLogsForDepartment = (deptId) => {
+        return watchLogs.filter(log => log.department === deptId);
+      };
+
+      // Get stats for a department
+      const getDepartmentStats = (deptId) => {
+        const deptLogs = getLogsForDepartment(deptId);
+        const uniqueUsers = [...new Set(deptLogs.map(log => log.userEmail))].length;
+        const totalWatchTime = deptLogs.reduce((sum, log) => sum + (log.duration || 0), 0);
+        const completedViews = deptLogs.filter(log => log.completed).length;
+        const deptVideos = videos.filter(v => v.department === deptId).length;
+        return { uniqueUsers, totalWatchTime, completedViews, totalViews: deptLogs.length, totalVideos: deptVideos };
+      };
+
+      // Get user watch summary for a department
+      const getUserSummary = (deptId) => {
+        const deptLogs = getLogsForDepartment(deptId);
+        const deptVideos = videos.filter(v => v.department === deptId);
+        
+        const userMap = {};
+        deptLogs.forEach(log => {
+          if (!userMap[log.userEmail]) {
+            userMap[log.userEmail] = {
+              email: log.userEmail,
+              name: log.userName,
+              photo: log.userPhoto,
+              videosWatched: new Set(),
+              totalTime: 0,
+              completedVideos: new Set(),
+              lastWatch: null
+            };
+          }
+          userMap[log.userEmail].videosWatched.add(log.videoId);
+          userMap[log.userEmail].totalTime += log.duration || 0;
+          if (log.completed) {
+            userMap[log.userEmail].completedVideos.add(log.videoId);
+          }
+          if (!userMap[log.userEmail].lastWatch || (log.startTime && log.startTime.toDate() > userMap[log.userEmail].lastWatch)) {
+            userMap[log.userEmail].lastWatch = log.startTime?.toDate();
+          }
+        });
+
+        return Object.values(userMap).map(u => ({
+          ...u,
+          videosWatched: u.videosWatched.size,
+          completedVideos: u.completedVideos.size,
+          totalVideos: deptVideos.length,
+          progress: deptVideos.length > 0 ? Math.round((u.completedVideos.size / deptVideos.length) * 100) : 0
+        })).sort((a, b) => b.progress - a.progress);
+      };
+
+      // Check if user can access department
+      const canAccessDepartment = (deptId) => {
+        return adminRole === 'admin' || adminRole === deptId;
       };
 
       if (loading || authLoading) {
@@ -352,6 +422,257 @@
         );
       }
 
+      // LOGS PAGE
+      if (currentPage === 'logs' && adminRole) {
+        const accessibleDepartments = adminRole === 'admin' 
+          ? departments 
+          : departments.filter(d => d.id === adminRole);
+        
+        const currentDept = selectedLogDepartment || (accessibleDepartments[0]?.id);
+        const currentDeptInfo = getDepartmentInfo(currentDept);
+        const stats = getDepartmentStats(currentDept);
+        const userSummary = getUserSummary(currentDept);
+        const deptLogs = getLogsForDepartment(currentDept);
+        const deptVideos = videos.filter(v => v.department === currentDept);
+
+        return (
+          <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+            {/* Header */}
+            <header className="bg-white/10 backdrop-blur-md border-b border-white/10 sticky top-0 z-40">
+              <div className="max-w-7xl mx-auto px-4 py-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setCurrentPage('home')}
+                      className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+                    >
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                      </svg>
+                    </button>
+                    <div className="h-10 flex items-center">
+                      <img src="./logo.png" alt="Bodbe Hotel" className="h-full w-auto object-contain" />
+                    </div>
+                    <div>
+                      <h1 className="text-lg font-bold text-white">Watch Logs</h1>
+                      <p className="text-xs text-slate-400">
+                        {adminRole === 'admin' ? 'Super Admin View' : `${currentDeptInfo?.name} Manager`}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="px-3 py-1.5 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors text-sm"
+                  >
+                    Logout
+                  </button>
+                </div>
+              </div>
+            </header>
+
+            <main className="max-w-7xl mx-auto px-4 py-6">
+              {/* Department Tabs (only for admin) */}
+              {adminRole === 'admin' && (
+                <div className="flex flex-wrap gap-2 mb-6">
+                  {departments.map(dept => (
+                    <button
+                      key={dept.id}
+                      onClick={() => setSelectedLogDepartment(dept.id)}
+                      className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+                        currentDept === dept.id
+                          ? `bg-gradient-to-r ${dept.color} text-white shadow-lg`
+                          : 'bg-white/5 text-slate-300 hover:bg-white/10'
+                      }`}
+                    >
+                      <span>{dept.icon}</span>
+                      <span className="hidden sm:inline">{dept.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Department Header */}
+              <div className={`p-6 rounded-2xl bg-gradient-to-r ${currentDeptInfo?.color} mb-6`}>
+                <div className="flex items-center gap-4">
+                  <div className="text-5xl">{currentDeptInfo?.icon}</div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-white">{currentDeptInfo?.name}</h2>
+                    <p className="text-white/80">Training Progress & Watch Logs</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Stats Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+                <div className="bg-white/5 rounded-xl p-4 text-center border border-white/10">
+                  <p className="text-3xl font-bold text-white">{stats.totalVideos}</p>
+                  <p className="text-xs text-slate-400 mt-1">Total Videos</p>
+                </div>
+                <div className="bg-white/5 rounded-xl p-4 text-center border border-white/10">
+                  <p className="text-3xl font-bold text-blue-400">{stats.uniqueUsers}</p>
+                  <p className="text-xs text-slate-400 mt-1">Unique Viewers</p>
+                </div>
+                <div className="bg-white/5 rounded-xl p-4 text-center border border-white/10">
+                  <p className="text-3xl font-bold text-emerald-400">{stats.totalViews}</p>
+                  <p className="text-xs text-slate-400 mt-1">Total Views</p>
+                </div>
+                <div className="bg-white/5 rounded-xl p-4 text-center border border-white/10">
+                  <p className="text-3xl font-bold text-amber-400">{stats.completedViews}</p>
+                  <p className="text-xs text-slate-400 mt-1">Completed</p>
+                </div>
+                <div className="bg-white/5 rounded-xl p-4 text-center border border-white/10">
+                  <p className="text-3xl font-bold text-purple-400">{formatDuration(stats.totalWatchTime)}</p>
+                  <p className="text-xs text-slate-400 mt-1">Watch Time</p>
+                </div>
+              </div>
+
+              {/* Two Column Layout */}
+              <div className="grid lg:grid-cols-2 gap-6">
+                {/* Employee Progress */}
+                <div className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden">
+                  <div className="p-4 border-b border-white/10">
+                    <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                      👥 Employee Progress
+                    </h3>
+                  </div>
+                  <div className="p-4 max-h-[400px] overflow-auto">
+                    {userSummary.length === 0 ? (
+                      <p className="text-slate-400 text-center py-8">No employees have watched videos yet.</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {userSummary.map((u, idx) => (
+                          <div key={u.email} className="bg-white/5 rounded-xl p-3">
+                            <div className="flex items-center gap-3 mb-2">
+                              {u.photo ? (
+                                <img src={u.photo} alt="" className="w-10 h-10 rounded-full" />
+                              ) : (
+                                <div className="w-10 h-10 rounded-full bg-slate-600 flex items-center justify-center text-white font-medium">
+                                  {u.name?.charAt(0) || '?'}
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-white font-medium truncate">{u.name}</p>
+                                <p className="text-slate-400 text-xs truncate">{u.email}</p>
+                              </div>
+                              <div className="text-right">
+                                <span className={`text-lg font-bold ${u.progress === 100 ? 'text-emerald-400' : u.progress >= 50 ? 'text-amber-400' : 'text-slate-400'}`}>
+                                  {u.progress}%
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden">
+                                <div 
+                                  className={`h-full rounded-full transition-all ${u.progress === 100 ? 'bg-emerald-500' : u.progress >= 50 ? 'bg-amber-500' : 'bg-slate-500'}`}
+                                  style={{ width: `${u.progress}%` }}
+                                />
+                              </div>
+                              <span className="text-xs text-slate-400">{u.completedVideos}/{u.totalVideos}</span>
+                            </div>
+                            <div className="flex justify-between mt-2 text-xs text-slate-500">
+                              <span>⏱️ {formatDuration(u.totalTime)}</span>
+                              {u.lastWatch && <span>Last: {u.lastWatch.toLocaleDateString()}</span>}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Videos in Department */}
+                <div className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden">
+                  <div className="p-4 border-b border-white/10">
+                    <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                      📹 Department Videos
+                    </h3>
+                  </div>
+                  <div className="p-4 max-h-[400px] overflow-auto">
+                    {deptVideos.length === 0 ? (
+                      <p className="text-slate-400 text-center py-8">No videos in this department.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {deptVideos.map(video => {
+                          const videoLogs = deptLogs.filter(l => l.videoId === video.id);
+                          const uniqueViewers = [...new Set(videoLogs.map(l => l.userEmail))].length;
+                          const completedCount = videoLogs.filter(l => l.completed).length;
+                          return (
+                            <div key={video.id} className="bg-white/5 rounded-lg p-3 flex items-center justify-between">
+                              <div className="flex-1 min-w-0">
+                                <p className="text-white font-medium truncate">{video.title}</p>
+                                <p className="text-slate-400 text-xs truncate">{video.description}</p>
+                              </div>
+                              <div className="text-right ml-3">
+                                <p className="text-emerald-400 font-medium">{uniqueViewers} viewers</p>
+                                <p className="text-xs text-slate-500">{completedCount} completed</p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Recent Watch Logs Table */}
+              <div className="mt-6 bg-white/5 rounded-2xl border border-white/10 overflow-hidden">
+                <div className="p-4 border-b border-white/10">
+                  <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                    📋 Recent Watch History
+                  </h3>
+                </div>
+                <div className="overflow-x-auto">
+                  {deptLogs.length === 0 ? (
+                    <p className="text-slate-400 text-center py-8">No watch history yet.</p>
+                  ) : (
+                    <table className="w-full text-sm">
+                      <thead className="bg-white/5">
+                        <tr className="text-left text-slate-400">
+                          <th className="px-4 py-3">Employee</th>
+                          <th className="px-4 py-3">Video</th>
+                          <th className="px-4 py-3">Duration</th>
+                          <th className="px-4 py-3">Status</th>
+                          <th className="px-4 py-3">Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {deptLogs.slice(0, 50).map((log) => (
+                          <tr key={log.id} className="border-t border-white/5 hover:bg-white/5">
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2">
+                                {log.userPhoto && (
+                                  <img src={log.userPhoto} alt="" className="w-6 h-6 rounded-full" />
+                                )}
+                                <div>
+                                  <p className="text-white">{log.userName || 'Unknown'}</p>
+                                  <p className="text-slate-500 text-xs">{log.userEmail}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-white max-w-[200px] truncate">{log.videoTitle}</td>
+                            <td className="px-4 py-3 text-slate-300">{formatDuration(log.duration)}</td>
+                            <td className="px-4 py-3">
+                              {log.completed ? (
+                                <span className="px-2 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-xs">✓ Completed</span>
+                              ) : (
+                                <span className="px-2 py-1 bg-slate-500/20 text-slate-400 rounded-full text-xs">Partial</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-slate-400 text-xs">{formatDate(log.startTime)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </div>
+            </main>
+          </div>
+        );
+      }
+
+      // HOME PAGE
       return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
           {/* Header */}
@@ -367,18 +688,12 @@
                     {user ? (
                       <div className="flex items-center gap-2">
                         <img src={user.photoURL} alt="" className="w-8 h-8 rounded-full" />
-                        <button
-                          onClick={signOut}
-                          className="px-2 py-1 bg-white/10 text-white rounded-lg text-xs"
-                        >
+                        <button onClick={signOut} className="px-2 py-1 bg-white/10 text-white rounded-lg text-xs">
                           Sign Out
                         </button>
                       </div>
                     ) : (
-                      <button
-                        onClick={signInWithGoogle}
-                        className="px-2 py-1 bg-white text-slate-800 rounded-lg text-xs font-medium flex items-center gap-1"
-                      >
+                      <button onClick={signInWithGoogle} className="px-2 py-1 bg-white text-slate-800 rounded-lg text-xs font-medium flex items-center gap-1">
                         <svg className="w-3 h-3" viewBox="0 0 24 24">
                           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                           <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -388,24 +703,12 @@
                         Sign In
                       </button>
                     )}
-                    {isAdmin ? (
-                      <button
-                        onClick={handleLogout}
-                        className="px-2 py-1 bg-red-500/20 text-red-400 rounded-lg text-xs"
-                      >
-                        Exit Admin
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => setShowLogin(true)}
-                        className="px-2 py-1 bg-white/10 text-white rounded-lg text-xs flex items-center gap-1"
-                      >
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                        Admin
-                      </button>
-                    )}
+                    <button onClick={() => setShowLogin(true)} className="px-2 py-1 bg-white/10 text-white rounded-lg text-xs flex items-center gap-1">
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                      Manager
+                    </button>
                   </div>
                 </div>
                 <div className="text-center pb-1">
@@ -429,19 +732,11 @@
                       <img src={user.photoURL} alt="" className="w-9 h-9 rounded-full border-2 border-white/20" />
                       <div className="text-right">
                         <p className="text-sm text-white font-medium">{user.displayName}</p>
-                        <button
-                          onClick={signOut}
-                          className="text-xs text-slate-400 hover:text-white"
-                        >
-                          Sign Out
-                        </button>
+                        <button onClick={signOut} className="text-xs text-slate-400 hover:text-white">Sign Out</button>
                       </div>
                     </div>
                   ) : (
-                    <button
-                      onClick={signInWithGoogle}
-                      className="px-4 py-2 bg-white text-slate-800 rounded-lg hover:bg-slate-100 transition-colors flex items-center gap-2 font-medium"
-                    >
+                    <button onClick={signInWithGoogle} className="px-4 py-2 bg-white text-slate-800 rounded-lg hover:bg-slate-100 transition-colors flex items-center gap-2 font-medium">
                       <svg className="w-5 h-5" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                         <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -451,23 +746,26 @@
                       Sign in with Google
                     </button>
                   )}
-                  {isAdmin ? (
+                  {adminRole ? (
                     <div className="flex items-center gap-2">
-                      <span className="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-sm font-medium">
-                        Admin Mode
-                      </span>
                       <button
-                        onClick={handleLogout}
-                        className="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors"
+                        onClick={() => setCurrentPage('logs')}
+                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
                       >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        View Logs
+                      </button>
+                      <span className="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-sm font-medium">
+                        {adminRole === 'admin' ? 'Admin' : getDepartmentInfo(adminRole)?.name}
+                      </span>
+                      <button onClick={handleLogout} className="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors">
                         Logout
                       </button>
                     </div>
                   ) : (
-                    <button
-                      onClick={() => setShowLogin(true)}
-                      className="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors flex items-center gap-2"
-                    >
+                    <button onClick={() => setShowLogin(true)} className="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors flex items-center gap-2">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                       </svg>
@@ -480,7 +778,7 @@
           </header>
 
           <main className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
-            {/* Sign in prompt for non-logged in users */}
+            {/* Sign in prompt */}
             {!user && (
               <div className="mb-6 p-4 bg-blue-500/10 rounded-xl border border-blue-500/20 flex flex-col sm:flex-row items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -494,10 +792,7 @@
                     <p className="text-slate-400 text-xs sm:text-sm">Your watch history will be saved</p>
                   </div>
                 </div>
-                <button
-                  onClick={signInWithGoogle}
-                  className="px-4 py-2 bg-white text-slate-800 rounded-lg hover:bg-slate-100 transition-colors flex items-center gap-2 font-medium text-sm"
-                >
+                <button onClick={signInWithGoogle} className="px-4 py-2 bg-white text-slate-800 rounded-lg hover:bg-slate-100 transition-colors flex items-center gap-2 font-medium text-sm">
                   <svg className="w-4 h-4" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                     <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -505,6 +800,37 @@
                     <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                   </svg>
                   Sign in with Google
+                </button>
+              </div>
+            )}
+
+            {/* Admin Controls (for adding videos) */}
+            {adminRole === 'admin' && (
+              <div className="mb-6 p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center">
+                    <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-white font-medium">Super Admin Panel</p>
+                    <p className="text-slate-400 text-xs">Add, edit, or delete training videos</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowAddForm(true);
+                    setEditingVideo(null);
+                    setFormData({ title: '', description: '', videoUrl: '', department: selectedDepartment || 'fo' });
+                  }}
+                  className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add Video
                 </button>
               </div>
             )}
@@ -532,336 +858,11 @@
                 ))}
               </div>
               {selectedDepartment && (
-                <button
-                  onClick={() => setSelectedDepartment(null)}
-                  className="mt-3 sm:mt-4 text-sm text-slate-400 hover:text-white transition-colors"
-                >
+                <button onClick={() => setSelectedDepartment(null)} className="mt-3 sm:mt-4 text-sm text-slate-400 hover:text-white transition-colors">
                   ← Show all departments
                 </button>
               )}
             </section>
-
-            {/* Admin Controls */}
-            {isAdmin && (
-              <section className="mb-6 sm:mb-8 p-4 sm:p-6 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 rounded-xl sm:rounded-2xl border border-emerald-500/20">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-3 sm:mb-4">
-                  <h2 className="text-base sm:text-lg font-semibold text-white flex items-center gap-2">
-                    <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    Admin Panel
-                  </h2>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setShowLogs(true)}
-                      className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                      </svg>
-                      View Logs
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowAddForm(true);
-                        setEditingVideo(null);
-                        setFormData({ title: '', description: '', videoUrl: '', department: selectedDepartment || 'fo' });
-                      }}
-                      className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
-                      Add Video
-                    </button>
-                  </div>
-                </div>
-                <p className="text-slate-400 text-xs sm:text-sm">
-                  ✅ Connected to Firebase • Videos and watch logs are tracked automatically
-                </p>
-              </section>
-            )}
-
-            {/* Add/Edit Form Modal */}
-            {(showAddForm || editingVideo) && (
-              <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
-                <div className="bg-slate-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 w-full max-w-lg border border-slate-700 shadow-2xl my-4">
-                  <h3 className="text-lg sm:text-xl font-bold text-white mb-4 sm:mb-6">
-                    {editingVideo ? 'Edit Video' : 'Add New Video'}
-                  </h3>
-                  <form onSubmit={editingVideo ? handleEditVideo : handleAddVideo} className="space-y-3 sm:space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-1.5 sm:mb-2">Department</label>
-                      <select
-                        value={formData.department}
-                        onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-slate-700 border border-slate-600 rounded-lg sm:rounded-xl text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm sm:text-base"
-                      >
-                        {departments.map((d) => (
-                          <option key={d.id} value={d.id}>
-                            {d.icon} {d.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-1.5 sm:mb-2">Video Title</label>
-                      <input
-                        type="text"
-                        value={formData.title}
-                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                        placeholder="e.g., Guest Check-in Procedures"
-                        required
-                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-slate-700 border border-slate-600 rounded-lg sm:rounded-xl text-white placeholder-slate-400 focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm sm:text-base"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-1.5 sm:mb-2">Description</label>
-                      <textarea
-                        value={formData.description}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        placeholder="Brief description of the training content..."
-                        rows={3}
-                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-slate-700 border border-slate-600 rounded-lg sm:rounded-xl text-white placeholder-slate-400 focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none text-sm sm:text-base"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-1.5 sm:mb-2">Video URL</label>
-                      <input
-                        type="url"
-                        value={formData.videoUrl}
-                        onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
-                        placeholder="https://youtube.com/watch?v=..."
-                        required
-                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-slate-700 border border-slate-600 rounded-lg sm:rounded-xl text-white placeholder-slate-400 focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm sm:text-base"
-                      />
-                      <p className="text-xs text-slate-500 mt-1.5 sm:mt-2">
-                        Paste YouTube or Vimeo link.
-                      </p>
-                    </div>
-                    <div className="flex gap-2 sm:gap-3 pt-3 sm:pt-4">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowAddForm(false);
-                          setEditingVideo(null);
-                        }}
-                        className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 bg-slate-700 text-white rounded-lg sm:rounded-xl hover:bg-slate-600 transition-colors text-sm sm:text-base"
-                        disabled={saving}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={saving}
-                        className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 bg-emerald-500 text-white rounded-lg sm:rounded-xl hover:bg-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base"
-                      >
-                        {saving ? (
-                          <>
-                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                            Saving...
-                          </>
-                        ) : (
-                          editingVideo ? 'Save Changes' : 'Add Video'
-                        )}
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            )}
-
-            {/* Watch Logs Modal */}
-            {showLogs && (
-              <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
-                <div className="bg-slate-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 w-full max-w-4xl border border-slate-700 shadow-2xl my-4 max-h-[90vh] overflow-hidden flex flex-col">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg sm:text-xl font-bold text-white">📊 Watch Logs</h3>
-                    <button
-                      onClick={() => setShowLogs(false)}
-                      className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
-                    >
-                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
-                  
-                  {/* Stats */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-                    {(() => {
-                      const stats = getLogStats();
-                      return (
-                        <>
-                          <div className="bg-blue-500/10 rounded-lg p-3 text-center">
-                            <p className="text-2xl font-bold text-blue-400">{stats.uniqueUsers}</p>
-                            <p className="text-xs text-slate-400">Unique Viewers</p>
-                          </div>
-                          <div className="bg-emerald-500/10 rounded-lg p-3 text-center">
-                            <p className="text-2xl font-bold text-emerald-400">{stats.totalViews}</p>
-                            <p className="text-xs text-slate-400">Total Views</p>
-                          </div>
-                          <div className="bg-amber-500/10 rounded-lg p-3 text-center">
-                            <p className="text-2xl font-bold text-amber-400">{stats.completedViews}</p>
-                            <p className="text-xs text-slate-400">Completed</p>
-                          </div>
-                          <div className="bg-purple-500/10 rounded-lg p-3 text-center">
-                            <p className="text-2xl font-bold text-purple-400">{formatDuration(stats.totalWatchTime)}</p>
-                            <p className="text-xs text-slate-400">Total Watch Time</p>
-                          </div>
-                        </>
-                      );
-                    })()}
-                  </div>
-                  
-                  {/* Logs Table */}
-                  <div className="overflow-auto flex-1">
-                    {watchLogs.length === 0 ? (
-                      <div className="text-center py-8">
-                        <p className="text-slate-400">No watch logs yet. Logs will appear when employees sign in and watch videos.</p>
-                      </div>
-                    ) : (
-                      <table className="w-full text-sm">
-                        <thead className="sticky top-0 bg-slate-800">
-                          <tr className="text-left text-slate-400 border-b border-slate-700">
-                            <th className="pb-2 pr-4">User</th>
-                            <th className="pb-2 pr-4">Video</th>
-                            <th className="pb-2 pr-4">Dept</th>
-                            <th className="pb-2 pr-4">Duration</th>
-                            <th className="pb-2">Date</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {watchLogs.map((log) => (
-                            <tr key={log.id} className="border-b border-slate-700/50 hover:bg-white/5">
-                              <td className="py-3 pr-4">
-                                <div className="flex items-center gap-2">
-                                  {log.userPhoto && (
-                                    <img src={log.userPhoto} alt="" className="w-6 h-6 rounded-full" />
-                                  )}
-                                  <div>
-                                    <p className="text-white text-xs sm:text-sm">{log.userName || 'Unknown'}</p>
-                                    <p className="text-slate-500 text-xs truncate max-w-[120px]">{log.userEmail}</p>
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="py-3 pr-4">
-                                <p className="text-white text-xs sm:text-sm truncate max-w-[150px]">{log.videoTitle}</p>
-                              </td>
-                              <td className="py-3 pr-4">
-                                <span className={`px-2 py-1 rounded text-xs bg-gradient-to-r ${getDepartmentInfo(log.department)?.color} text-white`}>
-                                  {getDepartmentInfo(log.department)?.icon}
-                                </span>
-                              </td>
-                              <td className="py-3 pr-4">
-                                <span className={`text-xs sm:text-sm ${log.completed ? 'text-emerald-400' : 'text-slate-400'}`}>
-                                  {formatDuration(log.duration)}
-                                  {log.completed && ' ✓'}
-                                </span>
-                              </td>
-                              <td className="py-3 text-slate-400 text-xs">
-                                {formatDate(log.startTime)}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Login Modal */}
-            {showLogin && (
-              <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
-                <div className="bg-slate-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 w-full max-w-sm border border-slate-700 shadow-2xl">
-                  <div className="text-center mb-4 sm:mb-6">
-                    <div className="h-12 sm:h-16 flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                      <img src="./logo.png" alt="Bodbe Hotel" className="h-full w-auto object-contain" />
-                    </div>
-                    <h3 className="text-lg sm:text-xl font-bold text-white">Manager Login</h3>
-                    <p className="text-slate-400 text-xs sm:text-sm mt-1">Enter password to access admin panel</p>
-                  </div>
-                  <form onSubmit={handleLogin}>
-                    <input
-                      type="password"
-                      value={password}
-                      onChange={(e) => {
-                        setPassword(e.target.value);
-                        setLoginError('');
-                      }}
-                      placeholder="Enter password"
-                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-slate-700 border border-slate-600 rounded-lg sm:rounded-xl text-white placeholder-slate-400 focus:ring-2 focus:ring-amber-500 focus:border-transparent mb-3 text-sm sm:text-base"
-                    />
-                    {loginError && (
-                      <p className="text-red-400 text-sm mb-3">{loginError}</p>
-                    )}
-                    <div className="flex gap-2 sm:gap-3">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowLogin(false);
-                          setPassword('');
-                          setLoginError('');
-                        }}
-                        className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 bg-slate-700 text-white rounded-lg sm:rounded-xl hover:bg-slate-600 transition-colors text-sm sm:text-base"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 bg-amber-500 text-white rounded-lg sm:rounded-xl hover:bg-amber-600 transition-colors text-sm sm:text-base"
-                      >
-                        Login
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            )}
-
-            {/* Video Player Modal */}
-            {activeVideo && (
-              <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4">
-                <div className="w-full max-w-4xl">
-                  <div className="flex justify-between items-start mb-2 sm:mb-4 gap-2">
-                    <div className="min-w-0 flex-1">
-                      <span className={`inline-block px-2 sm:px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r ${getDepartmentInfo(activeVideo.department)?.color} text-white mb-1 sm:mb-2`}>
-                        {getDepartmentInfo(activeVideo.department)?.icon} {getDepartmentInfo(activeVideo.department)?.name}
-                      </span>
-                      <h3 className="text-base sm:text-xl font-bold text-white truncate">{activeVideo.title}</h3>
-                    </div>
-                    <button
-                      onClick={stopWatching}
-                      className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors flex-shrink-0"
-                    >
-                      <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
-                  <div className="aspect-video bg-black rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl">
-                    <iframe
-                      src={activeVideo.videoUrl}
-                      className="w-full h-full"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                      title={activeVideo.title}
-                    />
-                  </div>
-                  {activeVideo.description && (
-                    <p className="text-slate-300 mt-2 sm:mt-4 text-sm sm:text-base">{activeVideo.description}</p>
-                  )}
-                  {user && (
-                    <p className="text-slate-500 text-xs mt-2">
-                      👁️ Watching as {user.displayName || user.email}
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
 
             {/* Videos Grid */}
             <section>
@@ -874,28 +875,14 @@
                 <div className="text-center py-10 sm:py-16 bg-white/5 rounded-xl sm:rounded-2xl border border-white/10">
                   <div className="text-4xl sm:text-5xl mb-3 sm:mb-4">📹</div>
                   <p className="text-slate-400 text-sm sm:text-base">No training videos yet.</p>
-                  {isAdmin && (
-                    <button
-                      onClick={() => setShowAddForm(true)}
-                      className="mt-3 sm:mt-4 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors text-sm sm:text-base"
-                    >
-                      Add First Video
-                    </button>
-                  )}
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
                   {filteredVideos.map((video) => {
                     const dept = getDepartmentInfo(video.department);
                     return (
-                      <div
-                        key={video.id}
-                        className="bg-white/5 rounded-xl sm:rounded-2xl overflow-hidden border border-white/10 hover:border-white/20 transition-all group"
-                      >
-                        <div
-                          className="aspect-video bg-slate-800 relative cursor-pointer"
-                          onClick={() => startWatching(video)}
-                        >
+                      <div key={video.id} className="bg-white/5 rounded-xl sm:rounded-2xl overflow-hidden border border-white/10 hover:border-white/20 transition-all group">
+                        <div className="aspect-video bg-slate-800 relative cursor-pointer" onClick={() => startWatching(video)}>
                           <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-slate-700 to-slate-800">
                             <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-full flex items-center justify-center group-hover:bg-white/30 group-hover:scale-110 transition-all">
                               <svg className="w-6 h-6 sm:w-8 sm:h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
@@ -911,32 +898,21 @@
                           <h3 className="font-semibold text-white mb-1 sm:mb-2 line-clamp-1 text-sm sm:text-base">{video.title}</h3>
                           <p className="text-xs sm:text-sm text-slate-400 line-clamp-2 mb-2 sm:mb-3">{video.description}</p>
                           <div className="flex items-center justify-between">
-                            <button
-                              onClick={() => startWatching(video)}
-                              className="text-xs sm:text-sm text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-1"
-                            >
+                            <button onClick={() => startWatching(video)} className="text-xs sm:text-sm text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-1">
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                               </svg>
-                              Watch Video
+                              Watch
                             </button>
-                            {isAdmin && (
+                            {adminRole === 'admin' && (
                               <div className="flex gap-1 sm:gap-2">
-                                <button
-                                  onClick={() => startEdit(video)}
-                                  className="p-1.5 sm:p-2 text-slate-400 hover:text-amber-400 hover:bg-amber-400/10 rounded-lg transition-colors"
-                                  title="Edit"
-                                >
+                                <button onClick={() => startEdit(video)} className="p-1.5 sm:p-2 text-slate-400 hover:text-amber-400 hover:bg-amber-400/10 rounded-lg transition-colors" title="Edit">
                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                   </svg>
                                 </button>
-                                <button
-                                  onClick={() => handleDeleteVideo(video.id)}
-                                  className="p-1.5 sm:p-2 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
-                                  title="Delete"
-                                >
+                                <button onClick={() => handleDeleteVideo(video.id)} className="p-1.5 sm:p-2 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors" title="Delete">
                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                   </svg>
@@ -952,6 +928,185 @@
               )}
             </section>
           </main>
+
+          {/* Login Modal */}
+          {showLogin && (
+            <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
+              <div className="bg-slate-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 w-full max-w-md border border-slate-700 shadow-2xl">
+                <div className="text-center mb-4 sm:mb-6">
+                  <div className="h-12 sm:h-16 flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                    <img src="./logo.png" alt="Bodbe Hotel" className="h-full w-auto object-contain" />
+                  </div>
+                  <h3 className="text-lg sm:text-xl font-bold text-white">Manager Login</h3>
+                  <p className="text-slate-400 text-xs sm:text-sm mt-1">Select your role and enter password</p>
+                </div>
+                <form onSubmit={handleLogin}>
+                  {/* Role Selection */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-slate-300 mb-2">Select Role</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setLoginType('admin')}
+                        className={`p-3 rounded-lg text-sm font-medium transition-all ${
+                          loginType === 'admin'
+                            ? 'bg-emerald-500 text-white'
+                            : 'bg-white/5 text-slate-300 hover:bg-white/10'
+                        }`}
+                      >
+                        👑 Super Admin
+                      </button>
+                      {departments.map(dept => (
+                        <button
+                          key={dept.id}
+                          type="button"
+                          onClick={() => setLoginType(dept.id)}
+                          className={`p-3 rounded-lg text-sm font-medium transition-all ${
+                            loginType === dept.id
+                              ? `bg-gradient-to-r ${dept.color} text-white`
+                              : 'bg-white/5 text-slate-300 hover:bg-white/10'
+                          }`}
+                        >
+                          {dept.icon} {dept.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => { setPassword(e.target.value); setLoginError(''); }}
+                    placeholder="Enter password"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-slate-700 border border-slate-600 rounded-lg sm:rounded-xl text-white placeholder-slate-400 focus:ring-2 focus:ring-amber-500 focus:border-transparent mb-3 text-sm sm:text-base"
+                  />
+                  {loginError && <p className="text-red-400 text-sm mb-3">{loginError}</p>}
+                  <div className="flex gap-2 sm:gap-3">
+                    <button
+                      type="button"
+                      onClick={() => { setShowLogin(false); setPassword(''); setLoginError(''); setLoginType('admin'); }}
+                      className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 bg-slate-700 text-white rounded-lg sm:rounded-xl hover:bg-slate-600 transition-colors text-sm sm:text-base"
+                    >
+                      Cancel
+                    </button>
+                    <button type="submit" className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 bg-amber-500 text-white rounded-lg sm:rounded-xl hover:bg-amber-600 transition-colors text-sm sm:text-base">
+                      Login
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* Add/Edit Form Modal */}
+          {(showAddForm || editingVideo) && (
+            <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+              <div className="bg-slate-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 w-full max-w-lg border border-slate-700 shadow-2xl my-4">
+                <h3 className="text-lg sm:text-xl font-bold text-white mb-4 sm:mb-6">
+                  {editingVideo ? 'Edit Video' : 'Add New Video'}
+                </h3>
+                <form onSubmit={editingVideo ? handleEditVideo : handleAddVideo} className="space-y-3 sm:space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-1.5 sm:mb-2">Department</label>
+                    <select
+                      value={formData.department}
+                      onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-slate-700 border border-slate-600 rounded-lg sm:rounded-xl text-white"
+                    >
+                      {departments.map((d) => (
+                        <option key={d.id} value={d.id}>{d.icon} {d.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-1.5 sm:mb-2">Video Title</label>
+                    <input
+                      type="text"
+                      value={formData.title}
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      placeholder="e.g., Guest Check-in Procedures"
+                      required
+                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-slate-700 border border-slate-600 rounded-lg sm:rounded-xl text-white placeholder-slate-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-1.5 sm:mb-2">Description</label>
+                    <textarea
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      placeholder="Brief description..."
+                      rows={3}
+                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-slate-700 border border-slate-600 rounded-lg sm:rounded-xl text-white placeholder-slate-400 resize-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-1.5 sm:mb-2">Video URL</label>
+                    <input
+                      type="url"
+                      value={formData.videoUrl}
+                      onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
+                      placeholder="https://youtube.com/watch?v=..."
+                      required
+                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-slate-700 border border-slate-600 rounded-lg sm:rounded-xl text-white placeholder-slate-400"
+                    />
+                  </div>
+                  <div className="flex gap-2 sm:gap-3 pt-3 sm:pt-4">
+                    <button
+                      type="button"
+                      onClick={() => { setShowAddForm(false); setEditingVideo(null); }}
+                      className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 bg-slate-700 text-white rounded-lg sm:rounded-xl hover:bg-slate-600"
+                      disabled={saving}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={saving}
+                      className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 bg-emerald-500 text-white rounded-lg sm:rounded-xl hover:bg-emerald-600 disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {saving ? 'Saving...' : (editingVideo ? 'Save' : 'Add Video')}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* Video Player Modal */}
+          {activeVideo && (
+            <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4">
+              <div className="w-full max-w-4xl">
+                <div className="flex justify-between items-start mb-2 sm:mb-4 gap-2">
+                  <div className="min-w-0 flex-1">
+                    <span className={`inline-block px-2 sm:px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r ${getDepartmentInfo(activeVideo.department)?.color} text-white mb-1 sm:mb-2`}>
+                      {getDepartmentInfo(activeVideo.department)?.icon} {getDepartmentInfo(activeVideo.department)?.name}
+                    </span>
+                    <h3 className="text-base sm:text-xl font-bold text-white truncate">{activeVideo.title}</h3>
+                  </div>
+                  <button onClick={stopWatching} className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors flex-shrink-0">
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="aspect-video bg-black rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl">
+                  <iframe
+                    src={activeVideo.videoUrl}
+                    className="w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    title={activeVideo.title}
+                  />
+                </div>
+                {activeVideo.description && (
+                  <p className="text-slate-300 mt-2 sm:mt-4 text-sm sm:text-base">{activeVideo.description}</p>
+                )}
+                {user && (
+                  <p className="text-slate-500 text-xs mt-2">👁️ Watching as {user.displayName || user.email}</p>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Footer */}
           <footer className="border-t border-white/10 mt-8 sm:mt-12">
