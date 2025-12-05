@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bodbe Learning Portal</title>
+  <title>Bodbe Training Portal</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -126,6 +126,7 @@
       const [selectedLogDepartment, setSelectedLogDepartment] = useState(null);
       const [user, setUser] = useState(null);
       const [authLoading, setAuthLoading] = useState(true);
+      const [userFilter, setUserFilter] = useState('');
       const watchStartTime = useRef(null);
       const currentWatchLogId = useRef(null);
 
@@ -149,6 +150,12 @@
           (err) => console.error("Error:", err)
         );
         return () => unsubscribe();
+      }, [adminRole]);
+
+      useEffect(() => {
+        if (adminRole && adminRole !== 'admin') {
+          setSelectedLogDepartment(adminRole);
+        }
       }, [adminRole]);
 
       const signInWithGoogle = async () => {
@@ -197,7 +204,10 @@
           setShowLogin(false);
           setPassword('');
           setLoginError('');
-          if (loginType !== 'admin') setSelectedLogDepartment(loginType);
+          if (loginType !== 'admin') {
+            setSelectedLogDepartment(loginType);
+            setSelectedDepartment(loginType);
+          }
         } else {
           setLoginError('Incorrect password');
         }
@@ -208,19 +218,15 @@
         setSelectedDepartment(null);
         setCurrentPage('home');
         setSelectedLogDepartment(null);
+        setUserFilter('');
       };
 
-      // Check if user can add video (admin can add to any, managers only to their dept)
-      const canAddVideo = () => adminRole !== null;
-      
-      // Check if user can edit/delete video
       const canEditVideo = (video) => {
         if (adminRole === 'admin') return true;
         if (adminRole && video.department === adminRole) return true;
         return false;
       };
 
-      // Get departments user can add videos to
       const getAddableDepartments = () => {
         if (adminRole === 'admin') return departments;
         if (adminRole) return departments.filter(d => d.id === adminRole);
@@ -270,12 +276,21 @@
       };
 
       const openAddForm = () => {
+        const dept = adminRole === 'admin' ? (selectedLogDepartment || selectedDepartment || 'fo') : adminRole;
+        setFormData({ title: '', description: '', videoUrl: '', department: dept });
         setShowAddForm(true);
         setEditingVideo(null);
-        setFormData({ title: '', description: '', videoUrl: '', department: adminRole === 'admin' ? (selectedDepartment || 'fo') : adminRole });
       };
 
-      const filteredVideos = selectedDepartment ? videos.filter((v) => v.department === selectedDepartment) : videos;
+      const getVisibleVideos = () => {
+        if (adminRole && adminRole !== 'admin') {
+          return videos.filter(v => v.department === adminRole);
+        }
+        return videos;
+      };
+
+      const visibleVideos = getVisibleVideos();
+      const filteredVideos = selectedDepartment ? visibleVideos.filter((v) => v.department === selectedDepartment) : visibleVideos;
       const getDepartmentInfo = (id) => departments.find((d) => d.id === id);
       const getLogsForDepartment = (deptId) => watchLogs.filter(log => log.department === deptId);
 
@@ -309,6 +324,17 @@
         })).sort((a, b) => b.progress - a.progress);
       };
 
+      const getUniqueUsers = (deptId) => {
+        const deptLogs = getLogsForDepartment(deptId);
+        const users = {};
+        deptLogs.forEach(log => {
+          if (!users[log.userEmail]) {
+            users[log.userEmail] = { email: log.userEmail, name: log.userName };
+          }
+        });
+        return Object.values(users).sort((a, b) => a.name.localeCompare(b.name));
+      };
+
       if (loading || authLoading) {
         return (
           <div className="min-h-screen bg-slate-950 flex items-center justify-center">
@@ -331,16 +357,24 @@
       // LOGS PAGE
       if (currentPage === 'logs' && adminRole) {
         const accessibleDepartments = adminRole === 'admin' ? departments : departments.filter(d => d.id === adminRole);
-        const currentDept = selectedLogDepartment || accessibleDepartments[0]?.id;
+        const currentDept = adminRole === 'admin' ? (selectedLogDepartment || accessibleDepartments[0]?.id) : adminRole;
         const currentDeptInfo = getDepartmentInfo(currentDept);
         const stats = getDepartmentStats(currentDept);
         const userSummary = getUserSummary(currentDept);
+        const uniqueUsers = getUniqueUsers(currentDept);
         const deptLogs = getLogsForDepartment(currentDept);
         const deptVideos = videos.filter(v => v.department === currentDept);
 
+        const filteredLogs = userFilter 
+          ? deptLogs.filter(log => log.userEmail === userFilter)
+          : deptLogs;
+
+        const filteredUserSummary = userFilter
+          ? userSummary.filter(u => u.email === userFilter)
+          : userSummary;
+
         return (
           <div className="min-h-screen bg-slate-950">
-            {/* Clean Header */}
             <header className="bg-slate-900/80 backdrop-blur-xl border-b border-slate-800/50 sticky top-0 z-40">
               <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -361,11 +395,10 @@
             </header>
 
             <main className="max-w-6xl mx-auto px-4 py-8">
-              {/* Department Tabs */}
               {adminRole === 'admin' && (
                 <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
                   {departments.map(dept => (
-                    <button key={dept.id} onClick={() => setSelectedLogDepartment(dept.id)}
+                    <button key={dept.id} onClick={() => { setSelectedLogDepartment(dept.id); setUserFilter(''); }}
                       className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap flex items-center gap-2 ${currentDept === dept.id ? `bg-gradient-to-r ${dept.color} text-white shadow-lg` : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'}`}>
                       <span className="text-lg">{dept.icon}</span>{dept.name}
                     </button>
@@ -373,7 +406,18 @@
                 </div>
               )}
 
-              {/* Stats Cards */}
+              {adminRole !== 'admin' && (
+                <div className={`p-5 rounded-2xl bg-gradient-to-r ${currentDeptInfo?.color} mb-8`}>
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl">{currentDeptInfo?.icon}</span>
+                    <div>
+                      <h2 className="text-xl font-bold text-white">{currentDeptInfo?.name}</h2>
+                      <p className="text-white/70 text-sm">Department Analytics</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-8">
                 {[
                   { label: 'Videos', value: stats.totalVideos, color: 'text-white' },
@@ -389,19 +433,37 @@
                 ))}
               </div>
 
-              {/* Two Column Layout */}
+              <div className="mb-6 flex flex-wrap items-center gap-3">
+                <label className="text-slate-400 text-sm">Filter by employee:</label>
+                <select 
+                  value={userFilter} 
+                  onChange={(e) => setUserFilter(e.target.value)}
+                  className="px-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-slate-600 min-w-[200px]"
+                >
+                  <option value="">All Employees</option>
+                  {uniqueUsers.map(u => (
+                    <option key={u.email} value={u.email}>{u.name}</option>
+                  ))}
+                </select>
+                {userFilter && (
+                  <button onClick={() => setUserFilter('')} className="text-slate-500 hover:text-white text-sm flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    Clear
+                  </button>
+                )}
+              </div>
+
               <div className="grid lg:grid-cols-2 gap-6 mb-8">
-                {/* Employee Progress */}
                 <div className="bg-slate-900/50 rounded-2xl border border-slate-800/50 overflow-hidden">
                   <div className="px-5 py-4 border-b border-slate-800/50">
-                    <h3 className="text-white font-medium">Employee Progress</h3>
+                    <h3 className="text-white font-medium">Employee Progress {userFilter && `(${filteredUserSummary.length})`}</h3>
                   </div>
                   <div className="p-4 max-h-[360px] overflow-auto">
-                    {userSummary.length === 0 ? (
+                    {filteredUserSummary.length === 0 ? (
                       <p className="text-slate-500 text-sm text-center py-8">No activity yet</p>
                     ) : (
                       <div className="space-y-3">
-                        {userSummary.map((u) => (
+                        {filteredUserSummary.map((u) => (
                           <div key={u.email} className="bg-slate-800/50 rounded-xl p-4">
                             <div className="flex items-center gap-3 mb-3">
                               {u.photo ? <img src={u.photo} alt="" className="w-9 h-9 rounded-full" /> : <div className="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center text-white text-sm">{u.name?.charAt(0)}</div>}
@@ -425,11 +487,15 @@
                   </div>
                 </div>
 
-                {/* Videos */}
                 <div className="bg-slate-900/50 rounded-2xl border border-slate-800/50 overflow-hidden">
                   <div className="px-5 py-4 border-b border-slate-800/50 flex justify-between items-center">
-                    <h3 className="text-white font-medium">Videos</h3>
-                    <button onClick={openAddForm} className={`px-3 py-1.5 rounded-lg text-xs font-medium bg-gradient-to-r ${currentDeptInfo?.color} text-white`}>+ Add</button>
+                    <h3 className="text-white font-medium">Videos ({deptVideos.length})</h3>
+                    <button 
+                      onClick={openAddForm} 
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium bg-gradient-to-r ${currentDeptInfo?.color} text-white hover:opacity-90 transition-opacity`}
+                    >
+                      + Add Video
+                    </button>
                   </div>
                   <div className="p-4 max-h-[360px] overflow-auto">
                     {deptVideos.length === 0 ? (
@@ -460,19 +526,19 @@
                 </div>
               </div>
 
-              {/* Watch History */}
               <div className="bg-slate-900/50 rounded-2xl border border-slate-800/50 overflow-hidden">
-                <div className="px-5 py-4 border-b border-slate-800/50">
+                <div className="px-5 py-4 border-b border-slate-800/50 flex justify-between items-center">
                   <h3 className="text-white font-medium">Recent Activity</h3>
+                  <span className="text-slate-500 text-xs">{filteredLogs.length} records</span>
                 </div>
                 <div className="overflow-x-auto">
-                  {deptLogs.length === 0 ? (
+                  {filteredLogs.length === 0 ? (
                     <p className="text-slate-500 text-sm text-center py-8">No activity yet</p>
                   ) : (
                     <table className="w-full text-sm">
                       <thead><tr className="text-left text-slate-500 text-xs uppercase tracking-wider"><th className="px-5 py-3">Employee</th><th className="px-5 py-3">Video</th><th className="px-5 py-3">Duration</th><th className="px-5 py-3">Status</th><th className="px-5 py-3">Date</th></tr></thead>
                       <tbody className="divide-y divide-slate-800/50">
-                        {deptLogs.slice(0, 30).map((log) => (
+                        {filteredLogs.slice(0, 50).map((log) => (
                           <tr key={log.id} className="hover:bg-slate-800/30">
                             <td className="px-5 py-3"><div className="flex items-center gap-2">{log.userPhoto && <img src={log.userPhoto} className="w-6 h-6 rounded-full" />}<span className="text-white">{log.userName}</span></div></td>
                             <td className="px-5 py-3 text-slate-300 max-w-[200px] truncate">{log.videoTitle}</td>
@@ -492,15 +558,18 @@
       }
 
       // HOME PAGE
+      const visibleDepartments = adminRole && adminRole !== 'admin' 
+        ? departments.filter(d => d.id === adminRole)
+        : departments;
+
       return (
         <div className="min-h-screen bg-slate-950">
-          {/* Clean Header */}
           <header className="bg-slate-900/80 backdrop-blur-xl border-b border-slate-800/50 sticky top-0 z-40">
             <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="h-9"><img src="./logo.png" alt="Bodbe Hotel" className="h-full w-auto" /></div>
                 <div className="hidden sm:block h-6 w-px bg-slate-800"></div>
-                <span className="hidden sm:block text-white font-medium">Learning & Training Portal</span>
+                <span className="hidden sm:block text-white font-medium">Training Portal</span>
               </div>
               <div className="flex items-center gap-3">
                 {user ? (
@@ -531,8 +600,7 @@
           </header>
 
           <main className="max-w-6xl mx-auto px-4 py-8">
-            {/* Welcome Banner */}
-            {!user && (
+            {!user && !adminRole && (
               <div className="mb-8 p-6 rounded-2xl bg-gradient-to-r from-blue-500/10 to-violet-500/10 border border-slate-800">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div>
@@ -547,7 +615,6 @@
               </div>
             )}
 
-            {/* Manager Banner */}
             {adminRole && (
               <div className={`mb-8 p-5 rounded-2xl border ${adminRole === 'admin' ? 'bg-amber-500/5 border-amber-500/20' : `${getDepartmentInfo(adminRole)?.lightBg} ${getDepartmentInfo(adminRole)?.border}`}`}>
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -555,7 +622,9 @@
                     <span className="text-2xl">{adminRole === 'admin' ? '👑' : getDepartmentInfo(adminRole)?.icon}</span>
                     <div>
                       <p className="text-white font-medium">{adminRole === 'admin' ? 'Super Admin' : `${getDepartmentInfo(adminRole)?.name} Manager`}</p>
-                      <p className="text-slate-500 text-sm">You can {adminRole === 'admin' ? 'manage all departments' : 'manage your department videos'}</p>
+                      <p className="text-slate-500 text-sm">
+                        {adminRole === 'admin' ? 'You can manage all departments' : `Managing ${getDepartmentInfo(adminRole)?.name} videos`}
+                      </p>
                     </div>
                   </div>
                   <div className="flex gap-2">
@@ -566,32 +635,40 @@
               </div>
             )}
 
-            {/* Department Filter */}
             <div className="mb-8">
-              <h2 className="text-slate-400 text-sm font-medium uppercase tracking-wider mb-4">Departments</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {departments.map((dept) => (
-                  <button key={dept.id} onClick={() => setSelectedDepartment(selectedDepartment === dept.id ? null : dept.id)}
-                    className={`p-5 rounded-2xl transition-all card-hover ${selectedDepartment === dept.id ? `bg-gradient-to-br ${dept.color} shadow-xl` : 'bg-slate-900 border border-slate-800 hover:border-slate-700'}`}>
+              <h2 className="text-slate-400 text-sm font-medium uppercase tracking-wider mb-4">
+                {adminRole && adminRole !== 'admin' ? 'Your Department' : 'Departments'}
+              </h2>
+              <div className={`grid gap-3 ${visibleDepartments.length === 1 ? 'grid-cols-1 max-w-xs' : 'grid-cols-2 sm:grid-cols-4'}`}>
+                {visibleDepartments.map((dept) => (
+                  <button 
+                    key={dept.id} 
+                    onClick={() => adminRole === 'admin' || !adminRole ? setSelectedDepartment(selectedDepartment === dept.id ? null : dept.id) : null}
+                    className={`p-5 rounded-2xl transition-all ${adminRole && adminRole !== 'admin' ? 'cursor-default' : 'card-hover'} ${selectedDepartment === dept.id || (adminRole && adminRole !== 'admin') ? `bg-gradient-to-br ${dept.color} shadow-xl` : 'bg-slate-900 border border-slate-800 hover:border-slate-700'}`}
+                  >
                     <div className="text-3xl mb-3">{dept.icon}</div>
                     <div className="text-white font-medium text-sm">{dept.name}</div>
                     <div className="text-slate-400 text-xs mt-1">{videos.filter((v) => v.department === dept.id).length} videos</div>
                   </button>
                 ))}
               </div>
-              {selectedDepartment && (
+              {selectedDepartment && adminRole === 'admin' && (
                 <button onClick={() => setSelectedDepartment(null)} className="mt-4 text-sm text-slate-500 hover:text-white flex items-center gap-1">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                  Clear filter
+                  Show all departments
                 </button>
               )}
             </div>
 
-            {/* Videos */}
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-slate-400 text-sm font-medium uppercase tracking-wider">
-                  {selectedDepartment ? `${getDepartmentInfo(selectedDepartment)?.icon} ${getDepartmentInfo(selectedDepartment)?.name}` : 'All Videos'}
+                  {adminRole && adminRole !== 'admin' 
+                    ? `${getDepartmentInfo(adminRole)?.icon} ${getDepartmentInfo(adminRole)?.name} Videos`
+                    : selectedDepartment 
+                      ? `${getDepartmentInfo(selectedDepartment)?.icon} ${getDepartmentInfo(selectedDepartment)?.name}` 
+                      : 'All Videos'
+                  }
                 </h2>
                 <span className="text-slate-600 text-sm">{filteredVideos.length} videos</span>
               </div>
@@ -600,6 +677,11 @@
                 <div className="text-center py-16 bg-slate-900/50 rounded-2xl border border-slate-800">
                   <div className="text-4xl mb-3">📹</div>
                   <p className="text-slate-500">No videos available</p>
+                  {adminRole && (
+                    <button onClick={openAddForm} className="mt-4 px-4 py-2 bg-slate-800 text-white rounded-lg text-sm hover:bg-slate-700">
+                      + Add your first video
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -641,7 +723,6 @@
             </div>
           </main>
 
-          {/* Login Modal */}
           {showLogin && (
             <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 fade-in">
               <div className="bg-slate-900 rounded-2xl p-6 w-full max-w-md border border-slate-800">
@@ -672,7 +753,6 @@
             </div>
           )}
 
-          {/* Add/Edit Modal */}
           {(showAddForm || editingVideo) && (
             <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 fade-in">
               <div className="bg-slate-900 rounded-2xl p-6 w-full max-w-lg border border-slate-800">
@@ -680,7 +760,12 @@
                 <form onSubmit={editingVideo ? handleEditVideo : handleAddVideo} className="space-y-4">
                   <div>
                     <label className="block text-slate-400 text-sm mb-2">Department</label>
-                    <select value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })} className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-slate-600" disabled={adminRole !== 'admin' && !editingVideo}>
+                    <select 
+                      value={formData.department} 
+                      onChange={(e) => setFormData({ ...formData, department: e.target.value })} 
+                      className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-slate-600" 
+                      disabled={adminRole !== 'admin'}
+                    >
                       {getAddableDepartments().map((d) => <option key={d.id} value={d.id}>{d.icon} {d.name}</option>)}
                     </select>
                     {adminRole !== 'admin' && <p className="text-slate-500 text-xs mt-1">You can only add videos to your department</p>}
@@ -706,7 +791,6 @@
             </div>
           )}
 
-          {/* Video Player */}
           {activeVideo && (
             <div className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4 fade-in">
               <div className="w-full max-w-5xl">
@@ -726,7 +810,6 @@
             </div>
           )}
 
-          {/* Footer */}
           <footer className="border-t border-slate-800/50 mt-16">
             <div className="max-w-6xl mx-auto px-4 py-6 text-center text-slate-600 text-xs">
               Bodbe Training Portal • Employee training videos
